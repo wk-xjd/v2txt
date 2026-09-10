@@ -36,8 +36,8 @@ def run_gui() -> None:
 
     root = tk.Tk()
     root.title("v2txt - 视频转文字")
-    root.geometry("720x470")
-    root.minsize(640, 430)
+    root.geometry("880x470")
+    root.minsize(800, 430)
 
     input_var = tk.StringVar()
     output_var = tk.StringVar()
@@ -86,6 +86,7 @@ def run_gui() -> None:
         state="readonly",
         width=12,
     ).pack(side="left", padx=(8, 28))
+    ttk.Label(options, text="base/small/medium 已内置").pack(side="left", padx=(0, 28))
     ttk.Label(options, text="语言").pack(side="left")
     ttk.Entry(options, textvariable=language_var, width=10).pack(side="left", padx=8)
     ttk.Label(options, text="（中文填 zh，自动识别填 auto）").pack(side="left")

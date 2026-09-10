@@ -17,7 +17,7 @@
 - 长任务中断后可从已完成的音频分块继续，避免重复处理全部视频。
 - 不改写、不总结、不纠错、不主动删除识别文本。
 - CLI 和核心服务解耦，未来 Web 界面可直接调用 Python API。
-- 便携包内置 ffmpeg、ffprobe 和 `small` CTranslate2 模型，默认离线可用。
+- 便携包内置 ffmpeg、ffprobe 和 `base`、`small`、`medium` 三档 CTranslate2 模型，常用档位离线可用；`large-v3` 保持外置。
 - 无参数启动桌面界面，传入参数进入 CLI；两者共享进度和错误模型。
 
 ## 3. 非目标
@@ -54,7 +54,7 @@
 - 锁文件中的 CTranslate2、PyAV、ONNX Runtime、Tokenizers 和 NumPy 必须同时包含 Python 3.11 的 `win_amd64` 与 `macOS arm64` wheel；缺少任一目标 wheel 时不得升级锁文件。
 - 开发、测试和运行统一通过 `uv sync`、`uv run pytest` 和 `uv run v2txt`，不维护第二套 `requirements.txt`。
 - 依赖升级必须显式修改精确版本并重新执行 `uv lock` 与完整测试，不能在普通安装过程中隐式升级。
-- Whisper 模型权重不属于 Python 包依赖，不进入 `uv.lock`；其名称和任务参数记录在检查点中。分发包把 `small` 放在可执行文件旁的 `models/small/`，其他模型可下载或按同样目录结构离线部署。
+- Whisper 模型权重不属于 Python 包依赖，不进入 `uv.lock`；其名称和任务参数记录在检查点中。分发包把 `base`、`small`、`medium` 放在可执行文件旁的 `models/<模型名>/`，`large-v3` 可下载或按同样目录结构离线部署。构建脚本从 ModelScope 获取三档权重并按固定大小和 SHA-256 校验。
 
 Python 3.11 作为第一版唯一支持的 minor 版本，减少 `faster-whisper`、CTranslate2 与平台原生 wheel 组合带来的差异。第一版不保证 Intel Mac 或 Windows ARM64；后续扩大 CPU 架构或 Python minor 版本时，必须先确认所有原生依赖有对应 wheel，并在目标系统完成测试。
 

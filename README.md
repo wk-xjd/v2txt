@@ -9,7 +9,7 @@
 - Windows 11 x64：双击 `v2txt/v2txt.exe`。
 - macOS Apple Silicon：打开终端执行 `v2txt/v2txt`；未签名内部包首次运行可能需要在“隐私与安全性”中允许。
 
-无参数启动是简单图形界面；传入视频路径则是 CLI。便携包已包含 ffmpeg、ffprobe 和默认 `small` 模型，不需要安装 Python、uv，也不需要联网下载默认模型。
+无参数启动是简单图形界面；传入视频路径则是 CLI。便携包已包含 ffmpeg、ffprobe 和 `base`、`small`、`medium` 三档模型，不需要安装 Python、uv，也不需要联网下载这三档模型。
 
 ## 支持平台
 
@@ -46,7 +46,7 @@ uv sync --frozen
 uv run v2txt --help
 ```
 
-源码运行时，首次使用某个模型会从 Hugging Face 下载模型权重；之后复用本机缓存。便携包已经内置 `small`。公司环境如果限制网络，也可以复制 CTranslate2 模型目录。
+源码运行时，首次使用某个模型会从 Hugging Face 下载模型权重；之后复用本机缓存。便携包已经内置 `base`、`small`、`medium`。公司环境如果限制网络，也可以复制 CTranslate2 模型目录。
 
 也可以把 CTranslate2 格式的离线模型按名称放在统一目录中：
 
@@ -116,7 +116,7 @@ macOS ARM64 在 macOS 主机执行 `scripts/build_macos.sh`；Windows x64 必须
 powershell -ExecutionPolicy Bypass -File scripts/build_windows.ps1 -VideoPath testvideo/test.mp4
 ```
 
-两个脚本都从锁文件安装依赖，加入 ffmpeg/ffprobe 和 `small` 模型，并在 `artifacts/` 生成 ZIP。Windows 命令还会让打包后的 `.exe` 真实转写测试视频并核对三种输出。PyInstaller 不是跨平台编译器，因此 macOS 不能直接生成可信的 Windows `.exe`。
+两个脚本都从锁文件安装依赖，从国内 ModelScope 下载并校验 `base`、`small`、`medium`，加入 ffmpeg/ffprobe 后在 `artifacts/` 生成 ZIP。Windows 命令还会让打包后的 `.exe` 真实转写测试视频并核对三种输出。PyInstaller 不是跨平台编译器，因此 macOS 不能直接生成可信的 Windows `.exe`。
 
 ## 输出
 

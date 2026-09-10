@@ -17,13 +17,9 @@ if [[ ! -x "$FFMPEG_BIN" || ! -x "$FFPROBE_BIN" ]]; then
   echo "未找到可执行的 ffmpeg/ffprobe。可用 V2TXT_FFMPEG 和 V2TXT_FFPROBE 指定。" >&2
   exit 1
 fi
-if [[ ! -f "$MODEL_ROOT/small/model.bin" ]]; then
-  echo "缺少 $MODEL_ROOT/small/model.bin。请先准备 CTranslate2 small 模型。" >&2
-  exit 1
-fi
-
 cd "$PROJECT_ROOT"
 uv sync --frozen
+uv run python scripts/download_models.py --root "$MODEL_ROOT" --models base small medium
 rm -rf "$TARGET_ROOT" "$PROJECT_ROOT/build/pyinstaller-macos"
 mkdir -p "$TARGET_ROOT" "$PROJECT_ROOT/build"
 
@@ -43,8 +39,10 @@ uv run pyinstaller \
   --collect-all tokenizers \
   "$PROJECT_ROOT/scripts/v2txt_entry.py"
 
-mkdir -p "$PACKAGE_DIR/models/small"
-cp -R "$MODEL_ROOT/small/." "$PACKAGE_DIR/models/small/"
+for model in base small medium; do
+  mkdir -p "$PACKAGE_DIR/models/$model"
+  cp -R "$MODEL_ROOT/$model/." "$PACKAGE_DIR/models/$model/"
+done
 cp "$PROJECT_ROOT/packaging/使用说明.txt" "$PACKAGE_DIR/使用说明.txt"
 
 "$PACKAGE_DIR/v2txt" --version

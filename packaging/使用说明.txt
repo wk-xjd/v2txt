@@ -4,8 +4,8 @@ v2txt 视频转文字
 界面使用：双击 v2txt（Windows 为 v2txt.exe），选择媒体文件后点击“开始转写”。
 命令行使用：v2txt 视频.mp4 --model small
 
-默认使用随程序附带的 small 模型，不需要联网下载。支持 base、small、medium、
-large-v3；选择未随包附带的模型时需要联网下载，或自行放入 models/模型名/。
+程序附带 base、small、medium 三档模型，不需要联网下载。默认使用 small。
+large-v3 仍然支持；选择它时需要联网下载，或自行放入 models/large-v3/。
 
 默认在视频旁创建“视频名_transcript”目录，其中包含：
   transcript.json  完整结构化文本

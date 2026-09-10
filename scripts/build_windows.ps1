@@ -21,14 +21,11 @@ if (-not $FfmpegPath) { $FfmpegPath = (Get-Command ffmpeg -ErrorAction SilentlyC
 if (-not $FfprobePath) { $FfprobePath = (Get-Command ffprobe -ErrorAction SilentlyContinue).Source }
 if (-not (Test-Path -LiteralPath $FfmpegPath -PathType Leaf)) { throw "未找到 ffmpeg.exe" }
 if (-not (Test-Path -LiteralPath $FfprobePath -PathType Leaf)) { throw "未找到 ffprobe.exe" }
-$smallModel = Join-Path $ModelRoot "small"
-if (-not (Test-Path -LiteralPath (Join-Path $smallModel "model.bin") -PathType Leaf)) {
-    throw "缺少 $smallModel\model.bin，请先准备 CTranslate2 small 模型"
-}
-
 Set-Location $projectRoot
 uv sync --frozen
 if ($LASTEXITCODE -ne 0) { throw "uv sync 失败" }
+uv run python scripts\download_models.py --root $ModelRoot --models base small medium
+if ($LASTEXITCODE -ne 0) { throw "离线模型准备失败" }
 
 Remove-Item -LiteralPath $targetRoot -Recurse -Force -ErrorAction SilentlyContinue
 Remove-Item -LiteralPath (Join-Path $projectRoot "build\pyinstaller-windows") -Recurse -Force -ErrorAction SilentlyContinue
@@ -51,8 +48,11 @@ $pyiArgs = @(
 uv run pyinstaller @pyiArgs
 if ($LASTEXITCODE -ne 0) { throw "PyInstaller 构建失败" }
 
-New-Item -ItemType Directory -Force -Path (Join-Path $packageDir "models\small") | Out-Null
-Copy-Item -Path (Join-Path $smallModel "*") -Destination (Join-Path $packageDir "models\small") -Recurse -Force
+foreach ($model in @("base", "small", "medium")) {
+    $destination = Join-Path $packageDir "models\$model"
+    New-Item -ItemType Directory -Force -Path $destination | Out-Null
+    Copy-Item -Path (Join-Path $ModelRoot "$model\*") -Destination $destination -Recurse -Force
+}
 Copy-Item -LiteralPath (Join-Path $projectRoot "packaging\使用说明.txt") -Destination (Join-Path $packageDir "使用说明.txt")
 
 & (Join-Path $packageDir "v2txt.exe") --version

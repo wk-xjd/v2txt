@@ -13,7 +13,7 @@
 
 ## 自动验证
 
-- 自动测试：41 passed，1 skipped；跳过项是必须显式启用的真实模型测试。
+- 自动测试：45 passed，1 skipped；跳过项是必须显式启用的真实模型测试。
 - 显式启用真实模型测试后：1 passed，耗时 197.84 秒。
 - Python 源码编译检查通过。
 - `uv build` 成功生成 `handover_transcriber-0.1.0-py3-none-any.whl` 和源码包。
@@ -92,11 +92,12 @@ powershell -ExecutionPolicy Bypass -File scripts/verify_windows.ps1 -VideoPath C
 
 - PyInstaller 6.22.2 已锁入 `uv.lock`。
 - macOS ARM64 成品程序、内置 ffmpeg 和 ffprobe 均由 `file` 确认为 Mach-O ARM64。
-- 便携目录包含 `models/small/model.bin`，清除 `HANDOVER_MODEL_DIR` 后仍可离线加载。
-- 解压目录约 696 MB，ZIP 约 529 MB。
+- 便携目录包含 `models/base`、`models/small`、`models/medium`，清除 `HANDOVER_MODEL_DIR` 后三档均可离线加载。
+- 解压目录约 2.2 GB，ZIP 约 2.0 GB；`large-v3` 因单模型约 3.09 GB 保持外置。
 - `--version`、`--help` 和更新后的 `testvideo/test.mp4` 完整转写均从成品目录直接运行。
 - 修正多进程冻结入口后，再用成品离线转写 20 秒样本：7 个 segment、三种输出齐全，无资源管理子进程告警。
+- 使用同一个五秒样本分别从成品内置目录加载 `base`、`small`、`medium`，三次均成功生成全部输出。
 - 无参数启动保持运行并显示 Tk 界面，人工中断后正常退出。
-- ZIP SHA-256：`a1336e6c829b18ad8872c06ce43089502d8fa4896d39bd2e4b28c7aab82ade1d`。
+- ZIP SHA-256：`0208d4a88d8e9d09f3a41d9322b783a7c41dd1ea58273070c32811b7152ff9de`。
 
 Windows 产物必须由 Windows x64 上的 `scripts/build_windows.ps1` 原生构建；macOS 构建不能替代 Windows 动态库装载和实际 CPU 推理验收。

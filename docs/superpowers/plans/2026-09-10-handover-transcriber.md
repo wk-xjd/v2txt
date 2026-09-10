@@ -312,6 +312,6 @@ docs/validation/testvideo-validation.md  真实视频验收结果
 - [x] 后端逐 segment 上报处理位置，CLI 使用 Rich 进度条，GUI 使用同一事件更新进度。
 - [x] 从可执行文件旁发现 `models/small`，从 PyInstaller 资源目录发现 ffmpeg/ffprobe。
 - [x] 精确锁定 PyInstaller，编写 macOS ARM64 与 Windows x64 原生构建脚本。
-- [x] 便携目录内放入 `small` 模型和用户说明，再压缩为 ZIP。
+- [x] 便携目录内放入 `base`、`small`、`medium` 三档模型和用户说明，再压缩为 ZIP；`large-v3` 保持可选外置。
 - [x] 在 macOS ARM64 构建并执行成品的版本与真实视频转写测试。
 - [ ] 在目标 ThinkPad Windows 11 x64 上构建 `.exe`，执行真实视频验收后归档 ZIP。
