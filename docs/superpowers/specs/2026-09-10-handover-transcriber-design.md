@@ -2,14 +2,14 @@
 
 ## 1. 目标
 
-构建一个 Windows 与 macOS 通用的本地命令行工具，把长时间交接视频或音频忠实转换为带时间线的文本。工具只负责语音识别和格式整理，不做摘要、内容删减、技术纠错或语义改写。
+构建一个 Windows 11 x64 与 macOS 14+ Apple Silicon 通用的本地命令行工具，把长时间交接视频或音频忠实转换为带时间线的文本。工具只负责语音识别和格式整理，不做摘要、内容删减、技术纠错或语义改写。
 
 第一版以低配 ThinkPad X1 Carbon 的 CPU 运行环境为性能基线，同时兼容 Apple Silicon Mac。所有媒体和转写数据均在本机处理，不上传到第三方服务。
 
 ## 2. 成功标准
 
 - 接受常见视频和音频容器作为输入；实际可解码能力由本机 `ffmpeg` 构建决定，工具不依赖扩展名猜测媒体内容。
-- 在 Windows 与 macOS 上使用同一套 Python 代码运行。
+- 在 Windows 11 x64 与 macOS 14+ Apple Silicon 上使用同一套 Python 代码和 `uv.lock` 运行。
 - 支持 `base`、`small`、`medium`、`large-v3` 四种 Whisper 模型，默认使用 `small`。
 - 默认使用 CPU 和 `int8` 计算，不要求 NVIDIA 显卡。
 - 输出结构化 JSON、标准 SRT 字幕和可阅读的时间线 Markdown。
@@ -47,11 +47,12 @@
 - 仓库提交 `pyproject.toml`、`.python-version` 和 `uv.lock`。
 - `pyproject.toml` 中所有直接运行时依赖和开发依赖均使用精确版本约束 `==`，不使用浮动的 `*`、`^`、`~=` 或无上限范围。
 - `uv.lock` 锁定完整的传递依赖集合，并纳入 Git；Windows 与 macOS 使用同一份锁文件。
+- 锁文件中的 CTranslate2、PyAV、ONNX Runtime、Tokenizers 和 NumPy 必须同时包含 Python 3.11 的 `win_amd64` 与 `macOS arm64` wheel；缺少任一目标 wheel 时不得升级锁文件。
 - 开发、测试和运行统一通过 `uv sync`、`uv run pytest` 和 `uv run handover-transcribe`，不维护第二套 `requirements.txt`。
 - 依赖升级必须显式修改精确版本并重新执行 `uv lock` 与完整测试，不能在普通安装过程中隐式升级。
 - Whisper 模型权重不属于 Python 包依赖，不进入 `uv.lock`；其名称和任务参数记录在检查点中，首次使用时下载到模型缓存。
 
-Python 3.11 作为第一版唯一支持的 minor 版本，减少 `faster-whisper`、CTranslate2 与平台原生 wheel 组合带来的差异。后续支持新的 Python minor 版本时，需在 Windows 和 macOS 上完成测试后扩大 `requires-python` 范围。
+Python 3.11 作为第一版唯一支持的 minor 版本，减少 `faster-whisper`、CTranslate2 与平台原生 wheel 组合带来的差异。第一版不保证 Intel Mac 或 Windows ARM64；后续扩大 CPU 架构或 Python minor 版本时，必须先确认所有原生依赖有对应 wheel，并在目标系统完成测试。
 
 ### 4.2 媒体兼容范围
 

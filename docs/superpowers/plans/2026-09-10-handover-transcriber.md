@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** 在 5 小时内交付一个可在 Windows/macOS CPU 环境运行、支持断点恢复并输出 JSON/SRT/Markdown 的本地视频转写 CLI。
+**Goal:** 在 5 小时内交付一个可在 Windows 11 x64 与 macOS 14+ Apple Silicon CPU 环境运行、支持断点恢复并输出 JSON/SRT/Markdown 的本地视频转写 CLI。
 
 **Architecture:** Typer CLI 调用独立的 `TranscriptionService`；服务依次使用 ffprobe/ffmpeg、检查点仓库、faster-whisper 后端和纯输出渲染器。外部进程与模型后端通过窄接口隔离，使自动测试无需下载模型。
 
@@ -14,6 +14,7 @@
 
 - `requires-python = ">=3.11,<3.12"`；`.python-version` 为 `3.11`。
 - 所有直接依赖使用 `==`，完整依赖写入并提交 `uv.lock`。
+- 锁定的原生依赖必须同时提供 Python 3.11 `win_amd64` 和 `macOS arm64` wheel；第一版不承诺 Intel Mac 或 Windows ARM64。
 - CPU 固定使用 `int8`；模型仅允许 `base`、`small`、`medium`、`large-v3`，默认 `small`。
 - 不摘要、不纠错、不删减，segment 只允许去除首尾空白。
 - 不按扩展名拒绝媒体；是否可处理由 ffprobe/ffmpeg 决定。
