@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** 在 5 小时内交付一个可在 Windows 11 x64 与 macOS 14+ Apple Silicon CPU 环境运行、支持断点恢复并输出 JSON/SRT/Markdown 的本地视频转写 CLI。
+**Goal:** 在 5 小时内交付一个以 Windows 11 x64 为主要平台、兼容 macOS 14+ ARM64、支持断点恢复并输出 JSON/SRT/Markdown 的本地视频转写 CLI。
 
 **Architecture:** Typer CLI 调用独立的 `TranscriptionService`；服务依次使用 ffprobe/ffmpeg、检查点仓库、faster-whisper 后端和纯输出渲染器。外部进程与模型后端通过窄接口隔离，使自动测试无需下载模型。
 
@@ -39,6 +39,7 @@ src/handover_transcriber/
   cli.py                             Typer/Rich 适配
 tests/                               对应模块测试与端到端假后端测试
 README.md                            Windows/macOS 安装和使用
+scripts/verify_windows.ps1           目标 ThinkPad 一键实机验收
 docs/validation/testvideo-validation.md  真实视频验收结果
 ```
 
@@ -241,6 +242,7 @@ docs/validation/testvideo-validation.md  真实视频验收结果
 
 **Files:**
 - Create: `README.md`
+- Create: `scripts/verify_windows.ps1`
 - Create: `docs/validation/testvideo-validation.md`
 - Test: `tests/test_real_media.py`（默认跳过，仅显式环境变量启用）
 
@@ -270,7 +272,7 @@ docs/validation/testvideo-validation.md  真实视频验收结果
 
 - [ ] **Step 5: README 与验收记录**
 
-  README 给出 uv、ffmpeg、首次模型下载、四种模型成本、输出说明、恢复、`--force`、Windows/macOS 命令和隐私说明。验收文档只写统计和短例子，不收录逐字稿。
+  README 给出 uv、ffmpeg、首次模型下载、四种模型成本、输出说明、恢复、`--force`、Windows/macOS 命令和隐私说明。`scripts/verify_windows.ps1` 在 PowerShell 中依次检查 x64、`uv sync --frozen`、`uv run pytest -q`、ffmpeg/ffprobe、CLI 帮助，并用用户传入的视频执行 `base` 真实转写。验收文档只写统计和短例子，不收录逐字稿。
 
 - [ ] **Step 6: 最终验证和提交**
 
@@ -282,6 +284,8 @@ docs/validation/testvideo-validation.md  真实视频验收结果
   uv run handover-transcribe --version
   git status --short
   ```
+
+  在目标 ThinkPad 上执行 `powershell -ExecutionPolicy Bypass -File scripts/verify_windows.ps1 -VideoPath C:\path\to\test.mp4`；该命令未成功前只报告 macOS 验证结果，不声明 Windows 实机通过。
 
   确认 `testvideo/`、`.local-validation/` 和模型缓存均未暂存，然后：
 

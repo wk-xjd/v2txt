@@ -4,7 +4,7 @@
 
 构建一个 Windows 11 x64 与 macOS 14+ Apple Silicon 通用的本地命令行工具，把长时间交接视频或音频忠实转换为带时间线的文本。工具只负责语音识别和格式整理，不做摘要、内容删减、技术纠错或语义改写。
 
-第一版以低配 ThinkPad X1 Carbon 的 CPU 运行环境为性能基线，同时兼容 Apple Silicon Mac。所有媒体和转写数据均在本机处理，不上传到第三方服务。
+第一版以 Windows 11 x64 的低配 ThinkPad X1 Carbon CPU 环境为主要交付与性能基线，同时兼容 macOS 14+ ARM64。所有媒体和转写数据均在本机处理，不上传到第三方服务。
 
 ## 2. 成功标准
 
@@ -351,6 +351,7 @@ testvideo/test.mp4
 6. 改用 `--model medium` 指向同一输出目录，确认工具拒绝混合结果。
 7. 改用新输出目录完成 `medium` 转写。
 8. 在 macOS 执行 `uv sync --frozen` 并重复短文件转写，确认依赖解析和输出结构一致。
+9. 在目标 ThinkPad X1 Carbon 上运行仓库提供的 `scripts/verify_windows.ps1`，完成锁文件安装、自动测试、CLI 帮助、ffmpeg 探测和短视频 `base` 模型真实转写；实机脚本未通过前不得声明 Windows 交付完成。
 
 ### 15.1 真实端到端验证与调优
 
