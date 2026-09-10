@@ -8,7 +8,7 @@
 
 ## 2. 成功标准
 
-- 接受常见视频和音频文件作为输入，包括 MP4、MOV、MKV、M4A、MP3 和 WAV。
+- 接受常见视频和音频容器作为输入；实际可解码能力由本机 `ffmpeg` 构建决定，工具不依赖扩展名猜测媒体内容。
 - 在 Windows 与 macOS 上使用同一套 Python 代码运行。
 - 支持 `base`、`small`、`medium`、`large-v3` 四种 Whisper 模型，默认使用 `small`。
 - 默认使用 CPU 和 `int8` 计算，不要求 NVIDIA 显卡。
@@ -32,7 +32,8 @@
 
 ## 4. 技术选型
 
-- Python 3.11 或更高版本。
+- Python 3.11.x；`pyproject.toml` 使用 `>=3.11,<3.12` 限定解释器版本，`.python-version` 指定 `3.11`。
+- `uv` 负责创建环境、安装依赖、运行命令和生成可复现的 `uv.lock`。
 - `faster-whisper` 负责本地语音识别。
 - 系统安装的 `ffmpeg` 和 `ffprobe` 负责媒体探测、音频标准化和分块。
 - `Typer` 提供 CLI 参数解析、帮助文本和退出码。
@@ -41,26 +42,48 @@
 
 选择 `faster-whisper` 的原因是它基于 CTranslate2，可在 Windows/macOS 的 CPU 上使用 `int8`，并提供时间戳、VAD 和模型缓存能力。第一版不为 Apple Silicon 单独引入 MLX 后端，以保持跨平台行为一致。
 
+### 4.1 Python 与依赖版本策略
+
+- 仓库提交 `pyproject.toml`、`.python-version` 和 `uv.lock`。
+- `pyproject.toml` 中所有直接运行时依赖和开发依赖均使用精确版本约束 `==`，不使用浮动的 `*`、`^`、`~=` 或无上限范围。
+- `uv.lock` 锁定完整的传递依赖集合，并纳入 Git；Windows 与 macOS 使用同一份锁文件。
+- 开发、测试和运行统一通过 `uv sync`、`uv run pytest` 和 `uv run handover-transcribe`，不维护第二套 `requirements.txt`。
+- 依赖升级必须显式修改精确版本并重新执行 `uv lock` 与完整测试，不能在普通安装过程中隐式升级。
+- Whisper 模型权重不属于 Python 包依赖，不进入 `uv.lock`；其名称和任务参数记录在检查点中，首次使用时下载到模型缓存。
+
+Python 3.11 作为第一版唯一支持的 minor 版本，减少 `faster-whisper`、CTranslate2 与平台原生 wheel 组合带来的差异。后续支持新的 Python minor 版本时，需在 Windows 和 macOS 上完成测试后扩大 `requires-python` 范围。
+
+### 4.2 媒体兼容范围
+
+工具把媒体能力交给 `ffprobe`/`ffmpeg` 判断，不设置扩展名白名单。第一版明确覆盖以下常见输入：
+
+- 视频：MP4、MOV、MKV、WebM、AVI、WMV、FLV、M4V、MPEG/MPG、TS/MTS/M2TS、3GP。
+- 音频：MP3、M4A、AAC、WAV、FLAC、OGG/Opus、WMA。
+
+“覆盖”表示：只要本机 `ffprobe` 能读取容器、检测到至少一条音频流，且 `ffmpeg` 能把该音频流解码为 PCM WAV，后续流程就必须正常工作。文件扩展名大小写不影响处理，扩展名错误但内容可被 `ffprobe` 识别时也允许处理。
+
+DRM 加密媒体、损坏文件、无音频流视频，以及本机 `ffmpeg` 未编译对应解码器的格式不在保证范围内。遇到这些情况时，工具输出可操作的探测或解码错误，不把它们统一误报为“不支持的扩展名”。
+
 ## 5. 用户界面
 
 安装后提供 `handover-transcribe` 命令：
 
 ```bash
-handover-transcribe video.mp4
-handover-transcribe video.mp4 --model base
-handover-transcribe video.mp4 --model medium
-handover-transcribe video.mp4 --model large-v3
-handover-transcribe video.mp4 --language auto
-handover-transcribe video.mp4 --prompt "KDockPanelHostProxy, Cowork, WebView"
-handover-transcribe video.mp4 --output ./output
-handover-transcribe video.mp4 --force
+uv run handover-transcribe video.mp4
+uv run handover-transcribe video.mp4 --model base
+uv run handover-transcribe video.mp4 --model medium
+uv run handover-transcribe video.mp4 --model large-v3
+uv run handover-transcribe video.mp4 --language auto
+uv run handover-transcribe video.mp4 --prompt "KDockPanelHostProxy, Cowork, WebView"
+uv run handover-transcribe video.mp4 --output ./output
+uv run handover-transcribe video.mp4 --force
 ```
 
 ### 5.1 参数
 
 | 参数 | 默认值 | 含义 |
 |---|---:|---|
-| `INPUT` | 必填 | 单个本地视频或音频文件 |
+| `INPUT` | 必填 | 单个本地视频或音频文件；格式由 `ffprobe` 探测 |
 | `--model` | `small` | `base`、`small`、`medium` 或 `large-v3` |
 | `--language` | `zh` | ISO 语言代码；`auto` 表示自动检测 |
 | `--prompt` | 空 | 提示模型识别项目名、函数名和英文缩写 |
@@ -73,7 +96,7 @@ handover-transcribe video.mp4 --force
 ### 5.2 退出码
 
 - `0`：成功生成所有输出。
-- `2`：CLI 参数错误或输入文件不受支持。
+- `2`：CLI 参数错误，或输入路径不是可读取的普通文件。
 - `3`：缺少 `ffmpeg`/`ffprobe` 或媒体无法读取。
 - `4`：模型加载或转写失败。
 - `5`：输出目录、磁盘空间或文件写入失败。
@@ -107,7 +130,7 @@ TranscriptionService
 
 ## 7. 数据流
 
-1. 校验输入路径、扩展名、输出路径和模型名称。
+1. 校验输入路径是可读取的普通文件，并校验输出路径和模型名称；不按扩展名拒绝输入。
 2. 查找 `ffmpeg` 与 `ffprobe`，读取媒体时长、格式和音频流信息。
 3. 计算任务指纹；若存在兼容检查点则载入，否则创建新任务。
 4. 使用 `ffmpeg` 生成 16 kHz、单声道、16-bit PCM WAV 音频块。
@@ -246,6 +269,7 @@ Markdown 按最多 60 秒的连续时间窗口组合 segment，组合只改变�
 
 - 缺少外部程序时，错误信息包含 Windows/macOS 各自的安装提示。
 - 输入无音频流时直接失败，不创建伪造的空转写。
+- 容器无法探测或音频无法解码时，保留 `ffprobe`/`ffmpeg` 的简化诊断，指出是容器、音频流还是解码器问题。
 - 输出目录已包含不兼容任务时直接失败并解释冲突字段。
 - 模型下载或加载失败时保留已生成的音频块和任务状态。
 - 单块转写失败时不把该块标记为完成；重新执行会从该块继续。
@@ -290,6 +314,8 @@ Markdown 按最多 60 秒的连续时间窗口组合 segment，组合只改变�
 
 - 使用程序生成的短 WAV，经伪转写后端完成完整流水线，验证三种输出。
 - 使用伪 `ffmpeg`/`ffprobe` 进程验证命令参数、无音频流和外部程序失败。
+- 参数化验证常见视频与音频容器的探测结果均进入相同音频标准化流程，不按扩展名分叉业务逻辑。
+- 验证大写扩展名和扩展名错误但可探测的媒体不会被 CLI 提前拒绝。
 - 模拟第二个块失败，再次运行时仅处理未完成块。
 - 模拟 Ctrl+C，验证已完成检查点保留且不显示 traceback。
 
@@ -297,19 +323,20 @@ Markdown 按最多 60 秒的连续时间窗口组合 segment，组合只改变�
 
 ## 15. 验收场景
 
-1. 在 Windows 的 CPU 环境安装工具与 ffmpeg。
+1. 在 Windows 的 CPU 环境使用已安装的 `uv` 执行 `uv sync --frozen`，确认严格按锁文件安装 Python 与依赖，再安装 ffmpeg。
 2. 对一个至少包含两段语音和一段静音的中文 MP4 执行默认命令。
-3. 确认生成 JSON、SRT、Markdown，三个文件的文本顺序和时间戳一致。
-4. 在长视频处理若干块后中断，再运行相同命令，确认跳过已完成块。
-5. 改用 `--model medium` 指向同一输出目录，确认工具拒绝混合结果。
-6. 改用新输出目录完成 `medium` 转写。
-7. 在 macOS 重复短文件转写，确认输出结构一致。
+3. 使用同一短媒体内容生成 MOV、MKV、WebM、AVI、MP3、M4A、WAV、FLAC 和 OGG 样本，确认均能进入转写流程。
+4. 确认生成 JSON、SRT、Markdown，三个文件的文本顺序和时间戳一致。
+5. 在长视频处理若干块后中断，再运行相同命令，确认跳过已完成块。
+6. 改用 `--model medium` 指向同一输出目录，确认工具拒绝混合结果。
+7. 改用新输出目录完成 `medium` 转写。
+8. 在 macOS 执行 `uv sync --frozen` 并重复短文件转写，确认依赖解析和输出结构一致。
 
 ## 16. 实施拆分
 
 实施计划将按以下可独立验证的工作单元展开，每个单元遵循测试先行：
 
-1. 项目打包、领域数据模型、参数约束和 CLI 骨架。
+1. `uv` 项目打包、Python/依赖锁定、领域数据模型、参数约束和 CLI 骨架。
 2. 时间戳、segment 规范化及三种最终输出渲染。
 3. 媒体探测、ffmpeg 音频标准化与 15 分钟分块。
 4. 检查点、任务指纹、原子写入和安全清理。
