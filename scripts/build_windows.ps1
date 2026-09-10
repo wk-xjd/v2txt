@@ -1,7 +1,8 @@
 param(
     [string]$ModelRoot = "$PSScriptRoot\..\.local-models",
     [string]$FfmpegPath = "",
-    [string]$FfprobePath = ""
+    [string]$FfprobePath = "",
+    [string]$VideoPath = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -56,6 +57,21 @@ Copy-Item -LiteralPath (Join-Path $projectRoot "packaging\使用说明.txt") -De
 
 & (Join-Path $packageDir "v2txt.exe") --version
 if ($LASTEXITCODE -ne 0) { throw "打包后的 v2txt.exe 无法启动" }
+
+if ($VideoPath) {
+    if (-not (Test-Path -LiteralPath $VideoPath -PathType Leaf)) {
+        throw "验收视频不存在：$VideoPath"
+    }
+    $smokeOutput = Join-Path $artifactRoot "windows-package-smoke"
+    & (Join-Path $packageDir "v2txt.exe") $VideoPath --model small --output $smokeOutput --force
+    if ($LASTEXITCODE -ne 0) { throw "打包后的程序真实视频转写失败" }
+    foreach ($name in @("transcript.json", "transcript.srt", "timeline.md")) {
+        if (-not (Test-Path -LiteralPath (Join-Path $smokeOutput $name) -PathType Leaf)) {
+            throw "打包验收缺少输出：$name"
+        }
+    }
+}
+
 $zipPath = Join-Path $artifactRoot "v2txt-windows-x64.zip"
 Remove-Item -LiteralPath $zipPath -Force -ErrorAction SilentlyContinue
 Compress-Archive -Path $packageDir -DestinationPath $zipPath -CompressionLevel Optimal

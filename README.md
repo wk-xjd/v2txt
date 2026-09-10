@@ -110,7 +110,13 @@ uv run v2txt meeting.mp4 -o output
 
 ## 构建便携包
 
-macOS ARM64 在 macOS 主机执行 `scripts/build_macos.sh`；Windows x64 必须在 Windows 主机执行 `scripts/build_windows.ps1`。两个脚本都从锁文件安装依赖，加入 ffmpeg/ffprobe 和 `small` 模型，并在 `artifacts/` 生成 ZIP。PyInstaller 不是跨平台编译器，因此 macOS 不能直接生成可信的 Windows `.exe`。
+macOS ARM64 在 macOS 主机执行 `scripts/build_macos.sh`；Windows x64 必须在 Windows 主机执行下列命令：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/build_windows.ps1 -VideoPath testvideo/test.mp4
+```
+
+两个脚本都从锁文件安装依赖，加入 ffmpeg/ffprobe 和 `small` 模型，并在 `artifacts/` 生成 ZIP。Windows 命令还会让打包后的 `.exe` 真实转写测试视频并核对三种输出。PyInstaller 不是跨平台编译器，因此 macOS 不能直接生成可信的 Windows `.exe`。
 
 ## 输出
 
