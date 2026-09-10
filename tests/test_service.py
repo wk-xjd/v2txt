@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from handover_transcriber.errors import TranscriptionError
+from handover_transcriber.errors import InputError, TranscriptionError
 from handover_transcriber.models import (
     AudioChunk,
     ChunkTranscript,
@@ -98,3 +98,10 @@ def test_completed_service_run_regenerates_outputs_without_audio(tmp_path: Path)
     assert backend.seen == []
     assert media.created == 1
     assert (config.output_dir / "timeline.md").is_file()
+
+
+def test_service_rejects_missing_input_before_media_probe(tmp_path: Path) -> None:
+    config = TaskConfig.create(tmp_path / "missing.mp4", output_dir=tmp_path / "out")
+
+    with pytest.raises(InputError, match="普通文件"):
+        TranscriptionService(FakeMedia(), lambda _: FakeTranscriber()).run(config)

@@ -6,3 +6,6 @@ __pycache__/
 testvideo/
 *_transcript/
 .local-validation/
+.local-tools/
+.local-models/
+dist/

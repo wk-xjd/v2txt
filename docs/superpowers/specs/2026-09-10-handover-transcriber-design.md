@@ -291,6 +291,8 @@ Markdown 按最多 60 秒的连续时间窗口组合 segment，组合只改变�
 ## 13. 性能与资源
 
 - `faster-whisper` 在 CPU 上使用 `compute_type="int8"`。
+- 默认 `condition_on_previous_text=false`；真实样本对照显示可减少上下文错误传播，并缩短 CPU 转写耗时。
+- 模型加载失败进行三次短退避重试；设置 `HANDOVER_MODEL_DIR` 时从 `<目录>/<模型名>` 加载离线 CTranslate2 权重。
 - 每次只转写一个 15 分钟音频块，避免同时占用过多内存和磁盘 I/O。
 - 音频块按需生成；第一版允许 `ffmpeg` 一次生成所有块，以简化恢复清单。
 - 模型在一次任务中只加载一次。

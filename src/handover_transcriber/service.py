@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Callable
 
 from .checkpoint import CheckpointStore
+from .errors import InputError
 from .media import MediaTools
 from .models import ProgressEvent, TaskConfig
 from .outputs import normalize_segments, write_outputs
@@ -40,6 +41,8 @@ class TranscriptionService:
         config: TaskConfig,
         on_progress: ProgressCallback | None = None,
     ) -> Path:
+        if not config.input_path.is_file():
+            raise InputError("输入路径必须是可读取的普通文件")
         self._emit(on_progress, "probe", 0.0, 0.0, "正在读取媒体信息")
         media_info = self.media.probe(config.input_path)
         store = CheckpointStore(config.output_dir)

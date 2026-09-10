@@ -22,7 +22,8 @@ class FakeWhisperModel:
         ), SimpleNamespace(language="zh")
 
 
-def test_backend_uses_cpu_int8_and_expected_transcription_options() -> None:
+def test_backend_uses_cpu_int8_and_expected_transcription_options(monkeypatch) -> None:
+    monkeypatch.delenv("HF_HUB_DISABLE_XET", raising=False)
     created: list[tuple[str, dict[str, object]]] = []
     model = FakeWhisperModel()
 
@@ -43,11 +44,12 @@ def test_backend_uses_cpu_int8_and_expected_transcription_options() -> None:
                 "initial_prompt": "Cowork",
                 "vad_filter": True,
                 "beam_size": 5,
-                "condition_on_previous_text": True,
+                "condition_on_previous_text": False,
             },
         )
     ]
     assert result == ChunkTranscript("zh", [RawSegment(1.0, 2.5, "嗯 第一段")])
+    assert __import__("os").environ["HF_HUB_DISABLE_XET"] == "1"
 
 
 def test_backend_passes_none_for_auto_language_and_reuses_model() -> None:
@@ -81,3 +83,42 @@ def test_backend_wraps_iteration_failure() -> None:
 
     with pytest.raises(TranscriptionError, match="inference failed"):
         backend.transcribe(Path("audio.wav"), language="zh", prompt=None)
+
+
+def test_backend_retries_temporary_model_load_failure() -> None:
+    attempts = 0
+    model = FakeWhisperModel()
+
+    def flaky_factory(name: str, **options: object) -> FakeWhisperModel:
+        nonlocal attempts
+        attempts += 1
+        if attempts < 3:
+            raise ConnectionError("temporary disconnect")
+        return model
+
+    delays: list[float] = []
+    backend = FasterWhisperTranscriber(
+        "base", model_factory=flaky_factory, sleeper=delays.append
+    )
+
+    backend.transcribe(Path("audio.wav"), language="zh", prompt=None)
+
+    assert attempts == 3
+    assert delays == [2.0, 4.0]
+
+
+def test_backend_uses_named_model_from_offline_root(tmp_path: Path, monkeypatch) -> None:
+    model_dir = tmp_path / "models/small"
+    model_dir.mkdir(parents=True)
+    monkeypatch.setenv("HANDOVER_MODEL_DIR", str(tmp_path / "models"))
+    created: list[str] = []
+
+    def factory(name: str, **options: object) -> FakeWhisperModel:
+        created.append(name)
+        return FakeWhisperModel()
+
+    FasterWhisperTranscriber("small", model_factory=factory).transcribe(
+        Path("audio.wav"), language="zh", prompt=None
+    )
+
+    assert created == [str(model_dir)]
