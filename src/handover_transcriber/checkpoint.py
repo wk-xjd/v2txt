@@ -14,6 +14,11 @@ from .models import AudioChunk, MediaInfo, RawSegment, TaskConfig
 @dataclass(frozen=True)
 class ResumeState:
     completed: frozenset[int]
+    chunk_count: int
+
+    @property
+    def all_complete(self) -> bool:
+        return self.chunk_count > 0 and len(self.completed) == self.chunk_count
 
 
 class CheckpointStore:
@@ -105,7 +110,10 @@ class CheckpointStore:
                 "completed": [],
             }
             self._atomic_json(self.manifest_path, self._manifest)
-        return ResumeState(frozenset(int(value) for value in self._manifest["completed"]))
+        return ResumeState(
+            frozenset(int(value) for value in self._manifest["completed"]),
+            len(self._manifest.get("chunks", [])),
+        )
 
     def _require_open(self) -> dict[str, Any]:
         if self._manifest is None:
@@ -129,6 +137,18 @@ class CheckpointStore:
         manifest = self._require_open()
         completed = {int(value) for value in manifest["completed"]}
         return [chunk for chunk in self._chunks if chunk.index not in completed]
+
+    def stored_chunks(self) -> list[AudioChunk]:
+        manifest = self._require_open()
+        return [
+            AudioChunk(
+                index=int(item["index"]),
+                path=self.work_dir / "audio" / str(item["file"]),
+                start=float(item["start"]),
+                end=float(item["end"]),
+            )
+            for item in manifest.get("chunks", [])
+        ]
 
     def save_chunk(
         self,

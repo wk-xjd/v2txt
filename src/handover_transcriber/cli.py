@@ -8,7 +8,9 @@ import typer
 from rich.console import Console
 
 from . import __version__
+from .errors import HandoverError
 from .models import TaskConfig
+from .service import TranscriptionService
 
 app = typer.Typer(add_completion=False, no_args_is_help=True)
 console = Console(stderr=True)
@@ -19,6 +21,17 @@ class ModelChoice(str, Enum):
     small = "small"
     medium = "medium"
     large_v3 = "large-v3"
+
+
+def build_service() -> TranscriptionService:
+    return TranscriptionService()
+
+
+def show_progress(event) -> None:
+    if console.is_terminal:
+        console.print(event.message)
+    else:
+        typer.echo(event.message)
 
 
 def build_config(
@@ -71,5 +84,17 @@ def transcribe(
         prompt=prompt,
         force=force,
     )
-    console.print(f"准备转写：[bold]{config.input_path}[/bold]")
-    console.print("核心转写服务将在后续任务中接入。")
+    if config.model == "large-v3":
+        typer.echo("提示：large-v3 在 CPU 上可能非常慢。", err=True)
+    try:
+        result = build_service().run(config, on_progress=show_progress)
+    except HandoverError as exc:
+        typer.echo(f"错误：{exc}", err=True)
+        raise typer.Exit(exc.exit_code) from exc
+    except KeyboardInterrupt as exc:
+        typer.echo("任务已中断；可以使用相同命令继续。", err=True)
+        raise typer.Exit(130) from exc
+    except Exception as exc:
+        typer.echo(f"意外错误：{exc}", err=True)
+        raise typer.Exit(1) from exc
+    typer.echo(f"输出目录：{result}")
