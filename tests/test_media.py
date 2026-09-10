@@ -1,5 +1,6 @@
 import json
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -57,6 +58,22 @@ def test_probe_reports_missing_ffprobe() -> None:
 
     with pytest.raises(MediaError, match="ffmpeg"):
         tools.probe(Path("video.mp4"))
+
+
+def test_probe_finds_ffprobe_bundled_by_pyinstaller(tmp_path: Path, monkeypatch) -> None:
+    bundled = tmp_path / "ffprobe"
+    bundled.touch()
+    monkeypatch.setattr(sys, "_MEIPASS", str(tmp_path), raising=False)
+    payload = {
+        "format": {"duration": "1", "format_name": "mp4"},
+        "streams": [{"index": 0, "codec_type": "audio", "codec_name": "aac"}],
+    }
+    runner = RecordingRunner(subprocess.CompletedProcess([], 0, json.dumps(payload), ""))
+    tools = MediaTools(runner=runner, locator=lambda _: None)
+
+    tools.probe(Path("video.mp4"))
+
+    assert runner.commands[0][0] == str(bundled)
 
 
 def test_create_chunks_returns_timeline_metadata(tmp_path: Path) -> None:

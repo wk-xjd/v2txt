@@ -11,7 +11,12 @@ from .models import ChunkTranscript, RawSegment
 
 class Transcriber(Protocol):
     def transcribe(
-        self, path: Path, *, language: str | None, prompt: str | None
+        self,
+        path: Path,
+        *,
+        language: str | None,
+        prompt: str | None,
+        on_progress: Callable[[float], None] | None = None,
     ) -> ChunkTranscript: ...
 
 
@@ -48,6 +53,12 @@ class FasterWhisperTranscriber:
             if not candidate.is_dir():
                 raise TranscriptionError(f"离线模型目录不存在：{candidate}")
             model_source = str(candidate)
+        else:
+            bundled_root = os.environ.get("V2TXT_BUNDLED_MODEL_DIR")
+            if bundled_root:
+                candidate = Path(bundled_root) / self.model_name
+                if candidate.is_dir():
+                    model_source = str(candidate)
         last_error: Exception | None = None
         for attempt in range(3):
             try:
@@ -66,6 +77,7 @@ class FasterWhisperTranscriber:
         *,
         language: str | None,
         prompt: str | None,
+        on_progress: Callable[[float], None] | None = None,
     ) -> ChunkTranscript:
         model = self._load_model()
         try:
@@ -77,11 +89,14 @@ class FasterWhisperTranscriber:
                 beam_size=5,
                 condition_on_previous_text=False,
             )
-            normalized = [
-                RawSegment(float(segment.start), float(segment.end), text)
-                for segment in segments
-                if (text := str(segment.text).strip())
-            ]
+            normalized = []
+            for segment in segments:
+                end = float(segment.end)
+                if on_progress:
+                    on_progress(end)
+                text = str(segment.text).strip()
+                if text:
+                    normalized.append(RawSegment(float(segment.start), end, text))
             detected_language = getattr(info, "language", None)
         except Exception as exc:
             raise TranscriptionError(f"音频块 {path.name} 转写失败：{exc}") from exc

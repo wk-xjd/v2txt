@@ -1,6 +1,15 @@
-# Handover Transcriber
+# v2txt
 
 把长时间交接视频或音频在本地转换为带时间戳的 JSON、SRT 和 Markdown。工具不做摘要、不删减、不纠错，也不会上传媒体内容。
+
+## 非开发者直接使用
+
+从 `artifacts/` 取得对应平台的 ZIP 并完整解压（不能只单独复制可执行文件）：
+
+- Windows 11 x64：双击 `v2txt/v2txt.exe`。
+- macOS Apple Silicon：打开终端执行 `v2txt/v2txt`；未签名内部包首次运行可能需要在“隐私与安全性”中允许。
+
+无参数启动是简单图形界面；传入视频路径则是 CLI。便携包已包含 ffmpeg、ffprobe 和默认 `small` 模型，不需要安装 Python、uv，也不需要联网下载默认模型。
 
 ## 支持平台
 
@@ -11,7 +20,7 @@
 
 常见 MP4、MOV、MKV、WebM、AVI、WMV、FLV、M4V、MPEG、TS、MTS、M2TS、3GP、MP3、M4A、AAC、WAV、FLAC、OGG、Opus 和 WMA 均交给 ffmpeg 实际探测，不按扩展名拒绝文件。
 
-## 安装
+## 开发环境安装
 
 ### Windows 11 x64
 
@@ -26,7 +35,7 @@ winget install Gyan.FFmpeg
 
 ```powershell
 uv sync --frozen
-uv run handover-transcribe --help
+uv run v2txt --help
 ```
 
 ### macOS ARM64
@@ -34,10 +43,10 @@ uv run handover-transcribe --help
 ```bash
 brew install uv ffmpeg
 uv sync --frozen
-uv run handover-transcribe --help
+uv run v2txt --help
 ```
 
-首次使用某个模型时会从 Hugging Face 下载模型权重；之后复用本机缓存。公司环境如果限制网络，可以在联网机器预先运行一次同名模型，再复制 Hugging Face 缓存。
+源码运行时，首次使用某个模型会从 Hugging Face 下载模型权重；之后复用本机缓存。便携包已经内置 `small`。公司环境如果限制网络，也可以复制 CTranslate2 模型目录。
 
 也可以把 CTranslate2 格式的离线模型按名称放在统一目录中：
 
@@ -53,13 +62,13 @@ models/
 
 ```powershell
 $env:HANDOVER_MODEL_DIR = "D:\models"
-uv run handover-transcribe meeting.mp4 --model small
+uv run v2txt meeting.mp4 --model small
 ```
 
 macOS：
 
 ```bash
-HANDOVER_MODEL_DIR=/path/to/models uv run handover-transcribe meeting.mp4 --model small
+HANDOVER_MODEL_DIR=/path/to/models uv run v2txt meeting.mp4 --model small
 ```
 
 环境变量存在时，对应的 `<目录>/<模型名>` 必须存在；否则工具会明确报错，不会悄悄改用其他权重。
@@ -67,22 +76,25 @@ HANDOVER_MODEL_DIR=/path/to/models uv run handover-transcribe meeting.mp4 --mode
 ## 使用
 
 ```bash
-# 默认中文、small 模型
-uv run handover-transcribe meeting.mp4
+# 便携包：默认中文、small 模型，并显示进度条
+v2txt meeting.mp4
+
+# 源码开发环境：默认中文、small 模型
+uv run v2txt meeting.mp4
 
 # 更快或更准确
-uv run handover-transcribe meeting.mp4 --model base
-uv run handover-transcribe meeting.mp4 --model medium
-uv run handover-transcribe meeting.mp4 --model large-v3
+uv run v2txt meeting.mp4 --model base
+uv run v2txt meeting.mp4 --model medium
+uv run v2txt meeting.mp4 --model large-v3
 
 # 自动检测语言
-uv run handover-transcribe meeting.mp4 --language auto
+uv run v2txt meeting.mp4 --language auto
 
 # 提示技术名词
-uv run handover-transcribe meeting.mp4 --prompt "KDockPanelHostProxy, Cowork, WebView"
+uv run v2txt meeting.mp4 --prompt "KDockPanelHostProxy, Cowork, WebView"
 
 # 指定输出目录
-uv run handover-transcribe meeting.mp4 -o output
+uv run v2txt meeting.mp4 -o output
 ```
 
 模型建议：
@@ -95,6 +107,10 @@ uv run handover-transcribe meeting.mp4 -o output
 | `large-v3` | 很慢 | 最高 | 高性能机器或最高准确率需求 |
 
 低配 X1 Carbon 建议从 `small` 开始。`large-v3` 在 CPU 上可能耗时很长。
+
+## 构建便携包
+
+macOS ARM64 在 macOS 主机执行 `scripts/build_macos.sh`；Windows x64 必须在 Windows 主机执行 `scripts/build_windows.ps1`。两个脚本都从锁文件安装依赖，加入 ffmpeg/ffprobe 和 `small` 模型，并在 `artifacts/` 生成 ZIP。PyInstaller 不是跨平台编译器，因此 macOS 不能直接生成可信的 Windows `.exe`。
 
 ## 输出
 

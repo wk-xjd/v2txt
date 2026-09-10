@@ -25,6 +25,12 @@ class MediaTools:
         self._locator = locator
 
     def _program(self, name: str) -> str:
+        bundle_root = getattr(sys, "_MEIPASS", None)
+        if bundle_root:
+            for file_name in (name, f"{name}.exe"):
+                bundled = Path(bundle_root) / file_name
+                if bundled.is_file():
+                    return str(bundled)
         path = self._locator(name)
         if path:
             return path

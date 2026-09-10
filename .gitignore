@@ -9,3 +9,6 @@ testvideo/
 .local-tools/
 .local-models/
 dist/
+build/
+artifacts/*
+!artifacts/README.md

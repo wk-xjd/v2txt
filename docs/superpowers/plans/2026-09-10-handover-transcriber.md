@@ -8,7 +8,7 @@
 
 **Tech Stack:** Python 3.11.x, uv 0.11+, faster-whisper 1.2.1, Typer 0.27.2, Rich 15.0.0, pytest 9.1.1, ffmpeg/ffprobe
 
-**Spec:** `docs/superpowers/specs/2026-09-10-handover-transcriber-design.md`
+**Spec:** `docs/superpowers/specs/2026-09-10-v2txtr-design.md`
 
 ## Global Constraints
 
@@ -37,9 +37,13 @@ src/handover_transcriber/
   transcriber.py                     后端协议与 faster-whisper 实现
   service.py                         可供 CLI/Web 复用的编排服务
   cli.py                             Typer/Rich 适配
+  gui.py                             Tk 简易桌面界面
+  launcher.py                        GUI/CLI 双入口和离线资源发现
 tests/                               对应模块测试与端到端假后端测试
 README.md                            Windows/macOS 安装和使用
 scripts/verify_windows.ps1           目标 ThinkPad 一键实机验收
+scripts/build_macos.sh               macOS ARM64 便携包
+scripts/build_windows.ps1            Windows x64 便携包
 docs/validation/testvideo-validation.md  真实视频验收结果
 ```
 
@@ -57,7 +61,7 @@ docs/validation/testvideo-validation.md  真实视频验收结果
 
 - [ ] **Step 1: 创建环境元数据和忽略规则**
 
-  `pyproject.toml` 精确声明 `faster-whisper==1.2.1`、`typer==0.27.2`、`rich==15.0.0`、开发依赖 `pytest==9.1.1`，入口为 `handover-transcribe = "handover_transcriber.cli:app"`。写入 `.python-version` 的 `3.11`；忽略 `.venv/`、`.DS_Store`、`testvideo/`、`*_transcript/`、`.local-validation/`、`.pytest_cache/`、`__pycache__/`。
+  `pyproject.toml` 精确声明 `faster-whisper==1.2.1`、`typer==0.27.2`、`rich==15.0.0`、开发依赖 `pytest==9.1.1`，入口为 `v2txt = "handover_transcriber.cli:app"`。写入 `.python-version` 的 `3.11`；忽略 `.venv/`、`.DS_Store`、`testvideo/`、`*_transcript/`、`.local-validation/`、`.pytest_cache/`、`__pycache__/`。
 
 - [ ] **Step 2: 写失败测试并确认 RED**
 
@@ -73,7 +77,7 @@ docs/validation/testvideo-validation.md  真实视频验收结果
 
 - [ ] **Step 3: 最小实现并确认 GREEN**
 
-  `TaskConfig` 使用冻结 dataclass；`ModelName = Literal["base", "small", "medium", "large-v3"]`。CLI 将 `auto` 转为后端使用的 `None`，默认输出为输入同级 `<stem>_transcript`，只验证 `is_file()`，不验证扩展名。执行上述测试和 `uv run handover-transcribe --help`。
+  `TaskConfig` 使用冻结 dataclass；`ModelName = Literal["base", "small", "medium", "large-v3"]`。CLI 将 `auto` 转为后端使用的 `None`，默认输出为输入同级 `<stem>_transcript`，只验证 `is_file()`，不验证扩展名。执行上述测试和 `uv run v2txt --help`。
 
 - [ ] **Step 4: 完整测试并提交**
 
@@ -142,7 +146,7 @@ docs/validation/testvideo-validation.md  真实视频验收结果
 - [ ] **Step 3: 若本机无 ffmpeg，验证可操作错误；完整测试并提交**
 
   ```bash
-  uv run handover-transcribe testvideo/test.mp4
+  uv run v2txt testvideo/test.mp4
   uv run pytest -q
   git add src/handover_transcriber/media.py tests/test_media.py
   git commit -m "feat: probe media and create audio chunks"
@@ -260,8 +264,8 @@ docs/validation/testvideo-validation.md  真实视频验收结果
 - [ ] **Step 3: 跑真实 testvideo 基线**
 
   ```bash
-  /usr/bin/time -p uv run handover-transcribe testvideo/test.mp4 --model base --output .local-validation/base
-  /usr/bin/time -p uv run handover-transcribe testvideo/test.mp4 --model small --output .local-validation/small
+  /usr/bin/time -p uv run v2txt testvideo/test.mp4 --model base --output .local-validation/base
+  /usr/bin/time -p uv run v2txt testvideo/test.mp4 --model small --output .local-validation/small
   ```
 
   记录 ffmpeg、uv、Python、模型、耗时、segment 数；用校验脚本断言 duration 与 280.269 秒误差不超过一秒、时间戳单调且三种输出顺序一致。
@@ -280,8 +284,8 @@ docs/validation/testvideo-validation.md  真实视频验收结果
   uv lock --check
   uv sync --frozen
   uv run pytest -q
-  uv run handover-transcribe --help
-  uv run handover-transcribe --version
+  uv run v2txt --help
+  uv run v2txt --version
   git status --short
   ```
 
@@ -293,3 +297,21 @@ docs/validation/testvideo-validation.md  真实视频验收结果
   git add README.md docs/validation tests/test_real_media.py src pyproject.toml uv.lock .gitignore
   git commit -m "docs: add setup and validation results"
   ```
+
+---
+
+### Task 8: v2txt 双入口、离线模型与便携包
+
+**Files:**
+- Modify: `pyproject.toml`, `uv.lock`, `src/handover_transcriber/cli.py`, `service.py`, `transcriber.py`, `media.py`
+- Create: `src/handover_transcriber/gui.py`, `launcher.py`, `scripts/v2txt_entry.py`
+- Create: `scripts/build_macos.sh`, `scripts/build_windows.ps1`, `packaging/使用说明.txt`, `artifacts/README.md`
+- Test: `tests/test_gui.py`, `tests/test_packaging.py` and progress tests
+
+- [x] 将安装命令缩短为 `v2txt`；无参数启动 Tk GUI，有参数进入 Typer CLI。
+- [x] 后端逐 segment 上报处理位置，CLI 使用 Rich 进度条，GUI 使用同一事件更新进度。
+- [x] 从可执行文件旁发现 `models/small`，从 PyInstaller 资源目录发现 ffmpeg/ffprobe。
+- [x] 精确锁定 PyInstaller，编写 macOS ARM64 与 Windows x64 原生构建脚本。
+- [x] 便携目录内放入 `small` 模型和用户说明，再压缩为 ZIP。
+- [x] 在 macOS ARM64 构建并执行成品的版本与真实视频转写测试。
+- [ ] 在目标 ThinkPad Windows 11 x64 上构建 `.exe`，执行真实视频验收后归档 ZIP。

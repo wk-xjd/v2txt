@@ -52,6 +52,18 @@ def test_backend_uses_cpu_int8_and_expected_transcription_options(monkeypatch) -
     assert __import__("os").environ["HF_HUB_DISABLE_XET"] == "1"
 
 
+def test_backend_reports_segment_progress() -> None:
+    model = FakeWhisperModel()
+    progress: list[float] = []
+    backend = FasterWhisperTranscriber("small", model_factory=lambda *args, **kwargs: model)
+
+    backend.transcribe(
+        Path("audio.wav"), language="zh", prompt=None, on_progress=progress.append
+    )
+
+    assert progress == [2.5, 4.0]
+
+
 def test_backend_passes_none_for_auto_language_and_reuses_model() -> None:
     model = FakeWhisperModel()
     created = 0
@@ -122,3 +134,37 @@ def test_backend_uses_named_model_from_offline_root(tmp_path: Path, monkeypatch)
     )
 
     assert created == [str(model_dir)]
+
+
+def test_backend_uses_bundled_model_when_present(tmp_path: Path, monkeypatch) -> None:
+    model_dir = tmp_path / "models/small"
+    model_dir.mkdir(parents=True)
+    monkeypatch.delenv("HANDOVER_MODEL_DIR", raising=False)
+    monkeypatch.setenv("V2TXT_BUNDLED_MODEL_DIR", str(tmp_path / "models"))
+    created: list[str] = []
+
+    def factory(name: str, **options: object) -> FakeWhisperModel:
+        created.append(name)
+        return FakeWhisperModel()
+
+    FasterWhisperTranscriber("small", model_factory=factory).transcribe(
+        Path("audio.wav"), language="zh", prompt=None
+    )
+
+    assert created == [str(model_dir)]
+
+
+def test_backend_can_download_model_missing_from_bundle(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.delenv("HANDOVER_MODEL_DIR", raising=False)
+    monkeypatch.setenv("V2TXT_BUNDLED_MODEL_DIR", str(tmp_path / "models"))
+    created: list[str] = []
+
+    def factory(name: str, **options: object) -> FakeWhisperModel:
+        created.append(name)
+        return FakeWhisperModel()
+
+    FasterWhisperTranscriber("medium", model_factory=factory).transcribe(
+        Path("audio.wav"), language="zh", prompt=None
+    )
+
+    assert created == ["medium"]

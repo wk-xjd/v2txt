@@ -40,11 +40,15 @@ class FakeTranscriber:
         self.fail_index = fail_index
         self.seen: list[int] = []
 
-    def transcribe(self, path: Path, *, language: str | None, prompt: str | None) -> ChunkTranscript:
+    def transcribe(
+        self, path: Path, *, language: str | None, prompt: str | None, on_progress=None
+    ) -> ChunkTranscript:
         index = int(path.stem.rsplit("-", 1)[1])
         self.seen.append(index)
         if index == self.fail_index:
             raise TranscriptionError("planned failure")
+        if on_progress:
+            on_progress(2.0)
         return ChunkTranscript("zh", [RawSegment(1.0, 2.0, f"第{index}段")])
 
 
@@ -68,6 +72,7 @@ def test_service_runs_pipeline_and_offsets_chunk_timestamps(tmp_path: Path) -> N
         (901.0, "第1段"),
     ]
     assert events[-1].stage == "complete"
+    assert any(event.stage == "transcribe" and event.completed_seconds == 902.0 for event in events)
     assert not (output / ".work/audio").exists()
 
 

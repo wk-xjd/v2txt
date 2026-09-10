@@ -80,6 +80,13 @@ class TranscriptionService:
                     chunk.path,
                     language=config.language,
                     prompt=config.prompt,
+                    on_progress=lambda seconds, chunk=chunk: self._emit(
+                        on_progress,
+                        "transcribe",
+                        min(chunk.start + seconds, media_info.duration_seconds),
+                        media_info.duration_seconds,
+                        f"正在转写音频块 {chunk.index + 1}/{len(chunks)}",
+                    ),
                 )
                 store.save_chunk(
                     chunk.index,

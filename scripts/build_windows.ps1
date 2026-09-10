@@ -1,0 +1,62 @@
+param(
+    [string]$ModelRoot = "$PSScriptRoot\..\.local-models",
+    [string]$FfmpegPath = "",
+    [string]$FfprobePath = ""
+)
+
+$ErrorActionPreference = "Stop"
+$projectRoot = (Resolve-Path "$PSScriptRoot\..").Path
+$artifactRoot = Join-Path $projectRoot "artifacts"
+$targetRoot = Join-Path $artifactRoot "windows-x64"
+$packageDir = Join-Path $targetRoot "v2txt"
+
+if ($env:PROCESSOR_ARCHITECTURE -ne "AMD64") {
+    throw "此脚本只构建 Windows x64 产物，当前架构为 $env:PROCESSOR_ARCHITECTURE"
+}
+if (-not (Get-Command uv -ErrorAction SilentlyContinue)) {
+    throw "缺少 uv。请运行：winget install astral-sh.uv"
+}
+if (-not $FfmpegPath) { $FfmpegPath = (Get-Command ffmpeg -ErrorAction SilentlyContinue).Source }
+if (-not $FfprobePath) { $FfprobePath = (Get-Command ffprobe -ErrorAction SilentlyContinue).Source }
+if (-not (Test-Path -LiteralPath $FfmpegPath -PathType Leaf)) { throw "未找到 ffmpeg.exe" }
+if (-not (Test-Path -LiteralPath $FfprobePath -PathType Leaf)) { throw "未找到 ffprobe.exe" }
+$smallModel = Join-Path $ModelRoot "small"
+if (-not (Test-Path -LiteralPath (Join-Path $smallModel "model.bin") -PathType Leaf)) {
+    throw "缺少 $smallModel\model.bin，请先准备 CTranslate2 small 模型"
+}
+
+Set-Location $projectRoot
+uv sync --frozen
+if ($LASTEXITCODE -ne 0) { throw "uv sync 失败" }
+
+Remove-Item -LiteralPath $targetRoot -Recurse -Force -ErrorAction SilentlyContinue
+Remove-Item -LiteralPath (Join-Path $projectRoot "build\pyinstaller-windows") -Recurse -Force -ErrorAction SilentlyContinue
+New-Item -ItemType Directory -Force -Path $targetRoot | Out-Null
+New-Item -ItemType Directory -Force -Path (Join-Path $projectRoot "build") | Out-Null
+
+$pyiArgs = @(
+    "--noconfirm", "--clean", "--onedir", "--console",
+    "--name", "v2txt",
+    "--distpath", $targetRoot,
+    "--workpath", (Join-Path $projectRoot "build\pyinstaller-windows"),
+    "--specpath", (Join-Path $projectRoot "build"),
+    "--add-binary", "$FfmpegPath;.",
+    "--add-binary", "$FfprobePath;.",
+    "--collect-all", "faster_whisper",
+    "--collect-all", "ctranslate2",
+    "--collect-all", "tokenizers",
+    (Join-Path $projectRoot "scripts\v2txt_entry.py")
+)
+uv run pyinstaller @pyiArgs
+if ($LASTEXITCODE -ne 0) { throw "PyInstaller 构建失败" }
+
+New-Item -ItemType Directory -Force -Path (Join-Path $packageDir "models\small") | Out-Null
+Copy-Item -Path (Join-Path $smallModel "*") -Destination (Join-Path $packageDir "models\small") -Recurse -Force
+Copy-Item -LiteralPath (Join-Path $projectRoot "packaging\使用说明.txt") -Destination (Join-Path $packageDir "使用说明.txt")
+
+& (Join-Path $packageDir "v2txt.exe") --version
+if ($LASTEXITCODE -ne 0) { throw "打包后的 v2txt.exe 无法启动" }
+$zipPath = Join-Path $artifactRoot "v2txt-windows-x64.zip"
+Remove-Item -LiteralPath $zipPath -Force -ErrorAction SilentlyContinue
+Compress-Archive -Path $packageDir -DestinationPath $zipPath -CompressionLevel Optimal
+Write-Host "构建完成：$zipPath" -ForegroundColor Green

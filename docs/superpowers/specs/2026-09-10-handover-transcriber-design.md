@@ -2,7 +2,7 @@
 
 ## 1. 目标
 
-构建一个 Windows 11 x64 与 macOS 14+ Apple Silicon 通用的本地命令行工具，把长时间交接视频或音频忠实转换为带时间线的文本。工具只负责语音识别和格式整理，不做摘要、内容删减、技术纠错或语义改写。
+构建一个 Windows 11 x64 与 macOS 14+ Apple Silicon 通用的本地工具，把长时间交接视频或音频忠实转换为带时间线的文本。同一个 `v2txt` 程序同时提供 CLI 和简易桌面界面；工具只负责语音识别和格式整理，不做摘要、内容删减、技术纠错或语义改写。
 
 第一版以 Windows 11 x64 的低配 ThinkPad X1 Carbon CPU 环境为主要交付与性能基线，同时兼容 macOS 14+ ARM64。所有媒体和转写数据均在本机处理，不上传到第三方服务。
 
@@ -17,12 +17,14 @@
 - 长任务中断后可从已完成的音频分块继续，避免重复处理全部视频。
 - 不改写、不总结、不纠错、不主动删除识别文本。
 - CLI 和核心服务解耦，未来 Web 界面可直接调用 Python API。
+- 便携包内置 ffmpeg、ffprobe 和 `small` CTranslate2 模型，默认离线可用。
+- 无参数启动桌面界面，传入参数进入 CLI；两者共享进度和错误模型。
 
 ## 3. 非目标
 
 第一版不包含：
 
-- 桌面界面或 Web 界面。
+- Web 服务或浏览器界面；只提供轻量 Tk 桌面界面。
 - 说话人识别。
 - 视频关键帧、OCR 或画面理解。
 - 自动摘要、主题聚类或正式交接文档生成。
@@ -39,6 +41,8 @@
 - `Typer` 提供 CLI 参数解析、帮助文本和退出码。
 - `Rich` 显示阶段、进度和可操作的错误信息。
 - `pytest` 用于单元测试和集成测试。
+- Python 标准库 `tkinter` 提供零额外依赖的桌面界面。
+- `PyInstaller` 在各目标系统生成便携目录；不做跨平台二进制编译。
 
 选择 `faster-whisper` 的原因是它基于 CTranslate2，可在 Windows/macOS 的 CPU 上使用 `int8`，并提供时间戳、VAD 和模型缓存能力。第一版不为 Apple Silicon 单独引入 MLX 后端，以保持跨平台行为一致。
 
@@ -48,9 +52,9 @@
 - `pyproject.toml` 中所有直接运行时依赖和开发依赖均使用精确版本约束 `==`，不使用浮动的 `*`、`^`、`~=` 或无上限范围。
 - `uv.lock` 锁定完整的传递依赖集合，并纳入 Git；Windows 与 macOS 使用同一份锁文件。
 - 锁文件中的 CTranslate2、PyAV、ONNX Runtime、Tokenizers 和 NumPy 必须同时包含 Python 3.11 的 `win_amd64` 与 `macOS arm64` wheel；缺少任一目标 wheel 时不得升级锁文件。
-- 开发、测试和运行统一通过 `uv sync`、`uv run pytest` 和 `uv run handover-transcribe`，不维护第二套 `requirements.txt`。
+- 开发、测试和运行统一通过 `uv sync`、`uv run pytest` 和 `uv run v2txt`，不维护第二套 `requirements.txt`。
 - 依赖升级必须显式修改精确版本并重新执行 `uv lock` 与完整测试，不能在普通安装过程中隐式升级。
-- Whisper 模型权重不属于 Python 包依赖，不进入 `uv.lock`；其名称和任务参数记录在检查点中，首次使用时下载到模型缓存。
+- Whisper 模型权重不属于 Python 包依赖，不进入 `uv.lock`；其名称和任务参数记录在检查点中。分发包把 `small` 放在可执行文件旁的 `models/small/`，其他模型可下载或按同样目录结构离线部署。
 
 Python 3.11 作为第一版唯一支持的 minor 版本，减少 `faster-whisper`、CTranslate2 与平台原生 wheel 组合带来的差异。第一版不保证 Intel Mac 或 Windows ARM64；后续扩大 CPU 架构或 Python minor 版本时，必须先确认所有原生依赖有对应 wheel，并在目标系统完成测试。
 
@@ -67,17 +71,17 @@ DRM 加密媒体、损坏文件、无音频流视频，以及本机 `ffmpeg` 未
 
 ## 5. 用户界面
 
-安装后提供 `handover-transcribe` 命令：
+安装后提供 `v2txt` 程序。双击或无参数运行打开桌面界面；传入参数进入 CLI：
 
 ```bash
-uv run handover-transcribe video.mp4
-uv run handover-transcribe video.mp4 --model base
-uv run handover-transcribe video.mp4 --model medium
-uv run handover-transcribe video.mp4 --model large-v3
-uv run handover-transcribe video.mp4 --language auto
-uv run handover-transcribe video.mp4 --prompt "KDockPanelHostProxy, Cowork, WebView"
-uv run handover-transcribe video.mp4 --output ./output
-uv run handover-transcribe video.mp4 --force
+uv run v2txt video.mp4
+uv run v2txt video.mp4 --model base
+uv run v2txt video.mp4 --model medium
+uv run v2txt video.mp4 --model large-v3
+uv run v2txt video.mp4 --language auto
+uv run v2txt video.mp4 --prompt "KDockPanelHostProxy, Cowork, WebView"
+uv run v2txt video.mp4 --output ./output
+uv run v2txt video.mp4 --force
 ```
 
 ### 5.1 参数
@@ -116,9 +120,13 @@ TranscriptionService
  └── OutputWriter     生成 JSON、SRT 和 Markdown
 ```
 
+界面层和 CLI 层都只构造 `TaskConfig` 并调用同一个 `TranscriptionService`。后台线程执行长任务，Tk 主线程通过队列消费 `ProgressEvent`，避免界面冻结。
+
 ### 6.1 模块边界
 
 - `cli.py`：仅解析参数、调用服务、渲染进度并将领域错误映射为退出码。
+- `gui.py`：文件选择、四档模型、语言、术语提示和进度展示；不包含转写逻辑。
+- `launcher.py`：发现便携包资源并根据是否有命令行参数分发到 GUI 或 CLI。
 - `service.py`：编排探测、分块、转写、恢复和最终输出，不包含 CLI 表现逻辑。
 - `media.py`：封装 `ffprobe` 和 `ffmpeg` 子进程，返回结构化媒体信息和音频块清单。
 - `transcriber.py`：定义转写后端协议并提供 `faster-whisper` 实现。
@@ -296,7 +304,7 @@ Markdown 按最多 60 秒的连续时间窗口组合 segment，组合只改变�
 - 每次只转写一个 15 分钟音频块，避免同时占用过多内存和磁盘 I/O。
 - 音频块按需生成；第一版允许 `ffmpeg` 一次生成所有块，以简化恢复清单。
 - 模型在一次任务中只加载一次。
-- Rich 进度按已完成媒体时长计算，不承诺实时速度。
+- Rich/Tk 进度按后端产生的 segment 结束时间更新，以媒体时长计算百分比；它表示处理位置，不承诺实时速度。
 - `large-v3` 在低配 CPU 上可能非常慢，CLI 在开始前显示提示但允许继续。
 
 ## 14. 测试策略

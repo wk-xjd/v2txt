@@ -25,11 +25,11 @@ if ($LASTEXITCODE -ne 0) { throw "uv sync 失败" }
 uv run pytest -q
 if ($LASTEXITCODE -ne 0) { throw "自动测试失败" }
 
-uv run handover-transcribe --help
+uv run v2txt --help
 if ($LASTEXITCODE -ne 0) { throw "CLI 帮助命令失败" }
 
 $outputPath = Join-Path $PSScriptRoot "..\.local-validation\windows-base"
-uv run handover-transcribe $VideoPath --model base --output $outputPath --force
+uv run v2txt $VideoPath --model base --output $outputPath --force
 if ($LASTEXITCODE -ne 0) { throw "真实视频转写失败" }
 
 $jsonPath = Join-Path $outputPath "transcript.json"
