@@ -1,4 +1,4 @@
-param(
+﻿param(
     [string]$ModelRoot = "$PSScriptRoot\..\.local-models",
     [string]$FfmpegPath = "",
     [string]$FfprobePath = "",
@@ -43,6 +43,7 @@ $pyiArgs = @(
     "--collect-all", "faster_whisper",
     "--collect-all", "ctranslate2",
     "--collect-all", "tokenizers",
+    "--collect-all", "opencc",
     (Join-Path $projectRoot "scripts\v2txt_entry.py")
 )
 uv run pyinstaller @pyiArgs

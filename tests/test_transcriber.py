@@ -41,7 +41,7 @@ def test_backend_uses_cpu_int8_and_expected_transcription_options(monkeypatch) -
             "audio.wav",
             {
                 "language": "zh",
-                "initial_prompt": "Cowork",
+                "initial_prompt": "以下是普通话的句子。Cowork",
                 "vad_filter": True,
                 "beam_size": 5,
                 "condition_on_previous_text": False,
@@ -50,6 +50,63 @@ def test_backend_uses_cpu_int8_and_expected_transcription_options(monkeypatch) -
     ]
     assert result == ChunkTranscript("zh", [RawSegment(1.0, 2.5, "嗯 第一段")])
     assert __import__("os").environ["HF_HUB_DISABLE_XET"] == "1"
+
+
+def test_backend_applies_simplified_hint_for_zh_without_user_prompt() -> None:
+    model = FakeWhisperModel()
+    backend = FasterWhisperTranscriber("small", model_factory=lambda *args, **kwargs: model)
+
+    backend.transcribe(Path("audio.wav"), language="zh", prompt=None)
+
+    assert model.calls[0][1]["initial_prompt"] == "以下是普通话的句子。"
+
+
+def test_backend_does_not_duplicate_simplified_hint() -> None:
+    model = FakeWhisperModel()
+    backend = FasterWhisperTranscriber("small", model_factory=lambda *args, **kwargs: model)
+
+    backend.transcribe(
+        Path("audio.wav"), language="zh", prompt="以下是普通话的句子。Cowork"
+    )
+
+    assert model.calls[0][1]["initial_prompt"] == "以下是普通话的句子。Cowork"
+
+
+def test_backend_leaves_prompt_untouched_for_auto_language() -> None:
+    model = FakeWhisperModel()
+    backend = FasterWhisperTranscriber("small", model_factory=lambda *args, **kwargs: model)
+
+    backend.transcribe(Path("audio.wav"), language=None, prompt=None)
+
+    assert model.calls[0][1]["initial_prompt"] is None
+
+
+def test_backend_converts_traditional_chinese_segments_to_simplified() -> None:
+    class TraditionalModel:
+        def transcribe(self, path: str, **options: object):
+            return iter([SimpleNamespace(start=0.0, end=1.0, text=" 銀行、中國、資產 追蹤 ")]), SimpleNamespace(language="zh")
+
+    backend = FasterWhisperTranscriber(
+        "small", model_factory=lambda *args, **kwargs: TraditionalModel()
+    )
+
+    result = backend.transcribe(Path("audio.wav"), language="zh", prompt=None)
+
+    assert result.segments == [RawSegment(0.0, 1.0, "银行、中国、资产 追踪")]
+
+
+def test_backend_keeps_traditional_text_for_cantonese() -> None:
+    class YueModel:
+        def transcribe(self, path: str, **options: object):
+            return iter([SimpleNamespace(start=0.0, end=1.0, text="銀行、中國")]), SimpleNamespace(language="yue")
+
+    backend = FasterWhisperTranscriber(
+        "small", model_factory=lambda *args, **kwargs: YueModel()
+    )
+
+    result = backend.transcribe(Path("audio.wav"), language=None, prompt=None)
+
+    assert result.segments == [RawSegment(0.0, 1.0, "銀行、中國")]
 
 
 def test_backend_reports_segment_progress() -> None:

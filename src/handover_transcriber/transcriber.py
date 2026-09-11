@@ -8,6 +8,27 @@ from typing import Any, Callable, Protocol
 from .errors import TranscriptionError
 from .models import ChunkTranscript, RawSegment
 
+SIMPLIFIED_CHINESE_HINT = "以下是普通话的句子。"
+
+_simplified_converter: Any | None = None
+
+
+def initial_prompt_for(language: str | None, prompt: str | None) -> str | None:
+    if language != "zh":
+        return prompt
+    if prompt and SIMPLIFIED_CHINESE_HINT in prompt:
+        return prompt
+    return SIMPLIFIED_CHINESE_HINT + (prompt or "")
+
+
+def to_simplified(text: str) -> str:
+    global _simplified_converter
+    if _simplified_converter is None:
+        from opencc import OpenCC
+
+        _simplified_converter = OpenCC("t2s")
+    return _simplified_converter.convert(text)
+
 
 class Transcriber(Protocol):
     def transcribe(
@@ -84,20 +105,23 @@ class FasterWhisperTranscriber:
             segments, info = model.transcribe(
                 str(path),
                 language=language,
-                initial_prompt=prompt,
+                initial_prompt=initial_prompt_for(language, prompt),
                 vad_filter=True,
                 beam_size=5,
                 condition_on_previous_text=False,
             )
             normalized = []
+            detected_language = getattr(info, "language", None)
+            simplify = (detected_language or language) == "zh"
             for segment in segments:
                 end = float(segment.end)
                 if on_progress:
                     on_progress(end)
                 text = str(segment.text).strip()
+                if text and simplify:
+                    text = to_simplified(text)
                 if text:
                     normalized.append(RawSegment(float(segment.start), end, text))
-            detected_language = getattr(info, "language", None)
         except Exception as exc:
             raise TranscriptionError(f"音频块 {path.name} 转写失败：{exc}") from exc
         return ChunkTranscript(detected_language, normalized)

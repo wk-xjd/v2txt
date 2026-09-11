@@ -110,6 +110,8 @@ uv run v2txt meeting.mp4 -o output
 
 低配 X1 Carbon 建议从 `small` 开始。`large-v3` 在 CPU 上可能耗时很长。
 
+中文（`--language zh`，默认）会在解码前注入“以下是普通话的句子。”提示以偏向简体输出；`--prompt` 提供的术语会拼接在该提示之后。写入结果前，中文转写会用 OpenCC 把残留繁体统一转换为简体；自动识别为其他语言时不做转换。旧版本已完成的分块检查点不会补做转换，跨版本续跑请换新输出目录或加 `--force`。
+
 ## 构建便携包
 
 macOS ARM64 在 macOS 主机执行 `scripts/build_macos.sh`；Windows x64 必须在 Windows x64 构建机执行下列命令：

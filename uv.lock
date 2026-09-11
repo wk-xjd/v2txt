@@ -150,6 +150,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "faster-whisper" },
+    { name = "opencc-python-reimplemented" },
     { name = "rich" },
     { name = "typer" },
 ]
@@ -163,6 +164,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "faster-whisper", specifier = "==1.2.1" },
+    { name = "opencc-python-reimplemented", specifier = ">=0.1.7" },
     { name = "rich", specifier = "==15.0.0" },
     { name = "typer", specifier = "==0.27.2" },
 ]
@@ -330,6 +332,15 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/3b/91/a66cd77f28379ede419672edda3184f1eb286db215dce1e7b976fae2d63b/onnxruntime-1.29.0-cp311-cp311-manylinux_2_28_x86_64.whl", hash = "sha256:85f8e8406c52658735fe5c7fbfd3ebaa1ed340768324f6252e4274e374580a23", size = 23113193, upload-time = "2026-08-17T22:53:39.732Z" },
     { url = "https://files.pythonhosted.org/packages/1c/82/2da968405c42340f03de0bcdb63be09ae1004f820b2295590d48951b5cf2/onnxruntime-1.29.0-cp311-cp311-win_amd64.whl", hash = "sha256:0d4f427afac434b0070fe992b540ddf20a7aff2265f760f314d91331935b6b98", size = 13999253, upload-time = "2026-08-17T22:53:43.184Z" },
     { url = "https://files.pythonhosted.org/packages/95/7a/70c9c893bf732ee66124c2d8de6a21fc9361ec62cf378f857043efcbf0eb/onnxruntime-1.29.0-cp311-cp311-win_arm64.whl", hash = "sha256:4eae472cf7dc3107dec1bb53cd6d142d1964616d08aae48654cd4254b2363c4b", size = 13741410, upload-time = "2026-08-17T22:53:45.521Z" },
+]
+
+[[package]]
+name = "opencc-python-reimplemented"
+version = "0.1.7"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/8d/6d/c6f37eed651dd6b752e50f80a93396cdaa42a6acc6ce05ad7452303ea511/opencc-python-reimplemented-0.1.7.tar.gz", hash = "sha256:4f777ea3461a25257a7b876112cfa90bb6acabc6dfb843bf4d11266e43579dee", size = 482566, upload-time = "2023-02-11T03:58:42.25Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/30/6b/055b7806f320cc8f2cdf23c5f70221c0dc1683fca9ffaf76dfc2ad4b91b6/opencc_python_reimplemented-0.1.7-py2.py3-none-any.whl", hash = "sha256:41b3b92943c7bed291f448e9c7fad4b577c8c2eae30fcfe5a74edf8818493aa6", size = 481813, upload-time = "2023-02-11T03:58:39.66Z" },
 ]
 
 [[package]]
