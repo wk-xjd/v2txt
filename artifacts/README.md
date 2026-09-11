@@ -11,12 +11,11 @@
 便携目录包含程序、ffmpeg/ffprobe 和 `base`、`small`、`medium` 三档模型。
 解压后无需安装 Python、uv 或下载这三档模型。
 
-## Windows 拆包交付（网盘单文件不超过 2 GB 时）
+## Windows 拆分交付（网盘单文件不超过 2 GB 时）
 
-两个 ZIP 解压到同一个位置（例如 `D:\`），合并后得到完整的 `v2txt\` 目录：
-
-1. `v2txt-windows-x64.zip`：程序、ffmpeg/ffprobe、`models\base`、`models\small`。
-2. `v2txt-medium-model.zip`：只包含 `v2txt\models\medium\`，解压后与主包合并。
+1. `v2txt-windows-x64.zip`（约 850 MB）：解压得到 `v2txt\` 文件夹，程序可直接使用。
+2. `v2txt-medium-model.zip`（约 1.4 GB）：解压得到一个 `medium` 文件夹和一份放置说明；
+   把 `medium` 文件夹整个复制进 `v2txt\models\`，与 base、small 放在一起即可。
 
 未放入 `models\medium\` 前，选择 medium 模型会回退为联网下载（公司网络受限时可能失败）；
 也可以设置 `HANDOVER_MODEL_DIR` 指向其他离线模型目录。

@@ -1,0 +1,14 @@
+v2txt medium 模型放置说明
+=========================
+
+本压缩包只包含 medium 一个模型，按下面两步做就行：
+
+第一步：解压本压缩包，得到一个 medium 文件夹。
+第二步：把 medium 文件夹整个复制到 v2txt 文件夹里的 models 文件夹中
+        （models 里原来放着 base 和 small，放好后三个在一起）。
+
+放好后的位置应该是这样：
+
+    v2txt\models\medium\model.bin
+
+完成后打开 v2txt，模型选择 medium 就能用，不需要联网。
