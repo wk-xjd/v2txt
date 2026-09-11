@@ -24,6 +24,12 @@ class TranscriptionService:
         self.transcriber_factory = transcriber_factory or (
             lambda model: FasterWhisperTranscriber(model)
         )
+        self._transcribers: dict[str, Transcriber] = {}
+
+    def _transcriber_for(self, model: str) -> Transcriber:
+        if model not in self._transcribers:
+            self._transcribers[model] = self.transcriber_factory(model)
+        return self._transcribers[model]
 
     @staticmethod
     def _emit(
@@ -67,7 +73,7 @@ class TranscriptionService:
 
         pending = store.pending_chunks()
         if pending:
-            backend = self.transcriber_factory(config.model)
+            backend = self._transcriber_for(config.model)
             for chunk in pending:
                 self._emit(
                     on_progress,

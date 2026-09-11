@@ -110,3 +110,20 @@ def test_service_rejects_missing_input_before_media_probe(tmp_path: Path) -> Non
 
     with pytest.raises(InputError, match="普通文件"):
         TranscriptionService(FakeMedia(), lambda _: FakeTranscriber()).run(config)
+
+
+def test_service_reuses_transcriber_across_runs(tmp_path: Path) -> None:
+    created: list[str] = []
+
+    def factory(model: str) -> FakeTranscriber:
+        created.append(model)
+        return FakeTranscriber()
+
+    service = TranscriptionService(FakeMedia(), factory)
+    for name in ("one", "two"):
+        source = tmp_path / f"{name}.mp4"
+        source.touch()
+        config = TaskConfig.create(source, output_dir=tmp_path / f"{name}_out")
+        service.run(config)
+
+    assert created == ["small"]

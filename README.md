@@ -97,7 +97,15 @@ uv run v2txt meeting.mp4 --prompt "KDockPanelHostProxy, Cowork, WebView"
 
 # 指定输出目录
 uv run v2txt meeting.mp4 -o output
+
+# 批量：一次处理多个文件，模型只加载一次
+uv run v2txt a.mp4 b.mp4 c.mp4
+
+# 批量指定输出父目录：生成 out/<名称>_transcript/
+uv run v2txt a.mp4 b.mp4 -o out
 ```
+
+批量模式（命令行传多个文件，或界面里一次选择多个文件）逐个转写并各自输出；单个文件失败不会中断其余文件，结尾打印成功/失败汇总，退出码取第一个失败的错误码。多个文件时 `-o` 是父目录，每个文件生成 `<名称>_transcript` 子目录；单个文件时 `-o` 仍是输出目录本身。界面多选后输出目录留空即可输出到各自视频旁。
 
 模型建议：
 
