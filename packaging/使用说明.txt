@@ -2,8 +2,15 @@ v2txt 视频转文字
 =================
 
 界面使用：双击 v2txt（Windows 为 v2txt.exe），可一次选择多个媒体文件，然后点击“开始转写”。
-命令行使用：v2txt 视频.mp4 --model small
-批量转写：v2txt 一.mp4 二.mp4 三.mp4；加 -o 父目录可统一指定输出位置（各自生成 <名称>_transcript）。
+
+命令行使用：
+  1. 打开 v2txt 文件夹，在文件夹窗口顶部的地址栏输入 cmd 后按回车。
+  2. 在弹出的黑色窗口里输入命令，按回车开始转写。常用命令：
+
+       v2txt.exe 视频.mp4                 转写一个视频（默认 small 模型）
+       v2txt.exe 视频.mp4 --model medium  用 medium 模型（需先按说明放好模型）
+       v2txt.exe 一.mp4 二.mp4 三.mp4     一次转写多个文件
+       v2txt.exe 一.mp4 二.mp4 -o D:\结果  多个文件统一放到指定文件夹
 
 程序附带 base、small 两档模型，不需要联网下载；medium 模型在单独的压缩包里，
 按里面的说明放入 models 文件夹即可。默认使用 small。
