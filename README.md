@@ -2,6 +2,8 @@
 
 把长时间交接视频或音频在本地转换为带时间戳的 JSON、SRT 和 Markdown。工具不做摘要、不删减、不纠错，也不会上传媒体内容。
 
+切换到 Windows ThinkPad 继续开发或验收时，从 [WINDOWS_HANDOFF.md](WINDOWS_HANDOFF.md) 开始。
+
 ## 非开发者直接使用
 
 从 `artifacts/` 取得对应平台的 ZIP 并完整解压（不能只单独复制可执行文件）：
