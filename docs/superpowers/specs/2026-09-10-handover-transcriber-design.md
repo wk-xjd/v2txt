@@ -361,7 +361,7 @@ testvideo/test.mp4
 6. 改用 `--model medium` 指向同一输出目录，确认工具拒绝混合结果。
 7. 改用新输出目录完成 `medium` 转写。
 8. 在 macOS 执行 `uv sync --frozen` 并重复短文件转写，确认依赖解析和输出结构一致。
-9. 在目标 ThinkPad X1 Carbon 上运行仓库提供的 `scripts/verify_windows.ps1`，完成锁文件安装、自动测试、CLI 帮助、ffmpeg 探测和短视频 `base` 模型真实转写；实机脚本未通过前不得声明 Windows 交付完成。
+9. 在 Windows x64 构建机运行仓库的 `scripts/verify_windows.ps1` 和 `scripts/build_windows.ps1`；再把完整便携 ZIP 复制到目标 ThinkPad X1 Carbon，在不安装 Git、uv、Python 或系统 ffmpeg 的条件下完成 GUI、CLI、三档离线模型和真实性能验收。构建机和目标机两阶段均通过前不得声明 Windows 交付完成。
 
 ### 15.1 真实端到端验证与调优
 

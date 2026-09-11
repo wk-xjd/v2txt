@@ -41,7 +41,7 @@ src/handover_transcriber/
   launcher.py                        GUI/CLI 双入口和离线资源发现
 tests/                               对应模块测试与端到端假后端测试
 README.md                            Windows/macOS 安装和使用
-scripts/verify_windows.ps1           目标 ThinkPad 一键实机验收
+scripts/verify_windows.ps1           Windows x64 构建机仓库验收
 scripts/build_macos.sh               macOS ARM64 便携包
 scripts/build_windows.ps1            Windows x64 便携包
 docs/validation/testvideo-validation.md  真实视频验收结果
@@ -289,7 +289,7 @@ docs/validation/testvideo-validation.md  真实视频验收结果
   git status --short
   ```
 
-  在目标 ThinkPad 上执行 `powershell -ExecutionPolicy Bypass -File scripts/verify_windows.ps1 -VideoPath C:\path\to\test.mp4`；该命令未成功前只报告 macOS 验证结果，不声明 Windows 实机通过。
+  在 Windows x64 构建机执行 `scripts/verify_windows.ps1` 和 `scripts/build_windows.ps1`；然后把便携 ZIP 复制到目标 ThinkPad，在无开发依赖条件下完成 GUI、CLI、离线模型和真实性能验收。两阶段未成功前只报告 macOS 验证结果，不声明 Windows 交付通过。
 
   确认 `testvideo/`、`.local-validation/` 和模型缓存均未暂存，然后：
 
@@ -314,4 +314,4 @@ docs/validation/testvideo-validation.md  真实视频验收结果
 - [x] 精确锁定 PyInstaller，编写 macOS ARM64 与 Windows x64 原生构建脚本。
 - [x] 便携目录内放入 `base`、`small`、`medium` 三档模型和用户说明，再压缩为 ZIP；`large-v3` 保持可选外置。
 - [x] 在 macOS ARM64 构建并执行成品的版本与真实视频转写测试。
-- [ ] 在目标 ThinkPad Windows 11 x64 上构建 `.exe`，执行真实视频验收后归档 ZIP。
+- [ ] 在 Windows x64 构建机生成 `.exe` 和 ZIP，再在目标 ThinkPad Windows 11 x64 上执行无开发依赖的交付验收。

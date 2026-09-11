@@ -13,7 +13,7 @@
 
 ## 自动验证
 
-- 自动测试：45 passed，1 skipped；跳过项是必须显式启用的真实模型测试。
+- 自动测试：48 passed，1 skipped；跳过项是必须显式启用的真实模型测试。
 - 显式启用真实模型测试后：1 passed，耗时 197.84 秒。
 - Python 源码编译检查通过。
 - `uv build` 成功生成 `handover_transcriber-0.1.0-py3-none-any.whl` 和源码包。
@@ -80,13 +80,13 @@ condition_on_previous_text=false
 
 ## 尚需目标机确认
 
-当前环境无法执行 Windows 二进制。代码、锁文件和依赖 wheel 已完成 Windows x64 静态验证，但 Windows 实机状态仍为未确认。必须在目标 ThinkPad X1 Carbon 上执行：
+当前环境无法执行 Windows 二进制。代码、锁文件和依赖 wheel 已完成 Windows x64 静态验证，但 Windows 状态仍未确认。先在任意 Windows x64 构建机执行：
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts/verify_windows.ps1 -VideoPath C:\path\to\test.mp4
 ```
 
-该脚本成功前，不声明 Windows 实机验收完成。
+随后在同一构建机执行 `scripts/build_windows.ps1` 生成便携 ZIP，再把 ZIP 复制到目标 ThinkPad X1 Carbon。目标机不安装开发依赖，直接完成 GUI、CLI、三档离线模型和性能测试。构建机与交付目标机两阶段均通过前，不声明 Windows 交付完成。
 
 ## v2txt 便携包验证
 

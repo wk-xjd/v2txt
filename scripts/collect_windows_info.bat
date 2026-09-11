@@ -37,12 +37,6 @@ echo [Power Plan]
 powercfg.exe /getactivescheme
 echo.
 
-echo [v2txt Prerequisites]
-where.exe uv 2^>nul || echo uv: not found
-where.exe ffmpeg 2^>nul || echo ffmpeg: not found
-where.exe ffprobe 2^>nul || echo ffprobe: not found
-echo.
-
 echo Privacy note: no serial number, product key, user files, or network configuration was collected.
 ) > "%OUTPUT%" 2>&1
 

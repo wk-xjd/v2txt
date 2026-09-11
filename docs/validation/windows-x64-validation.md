@@ -1,10 +1,12 @@
 # Windows 11 x64 实机验收记录
 
-状态：待在目标 ThinkPad X1 Carbon 上执行。
+状态：待完成 Windows x64 构建机验证和目标 ThinkPad X1 Carbon 交付验收。
 
 > 只记录硬件摘要、命令、耗时、统计和错误；不要粘贴序列号、公司视频内容或完整逐字稿。
 
-## 环境摘要
+本记录区分两类 Windows 机器：构建机负责源码、依赖、测试和 PyInstaller；ThinkPad 是产品目标机，只运行完整便携包。
+
+## 目标 ThinkPad 环境摘要
 
 - 验收日期：
 - 电脑型号：
@@ -14,14 +16,12 @@
 - Windows 版本 / Build：
 - 磁盘及可用空间：
 - 活动电源计划：
-- uv 版本：
-- Python 版本：
-- ffmpeg 版本：
-- Git commit：
+- 便携包版本：
+- 便携包 Git commit：
 
-配置来源：运行 `scripts\collect_windows_info.bat`。原始 `v2txt-machine-info.txt` 留在本机，不提交。
+配置来源：在 ThinkPad 解压目录运行随包附带的 `collect_windows_info.bat`。目标机不需要源码或开发工具；原始 `v2txt-machine-info.txt` 留在本机，不提交。
 
-## 自动测试
+## Windows x64 构建机自动测试
 
 ```powershell
 uv sync --frozen
@@ -44,6 +44,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\build_windows.ps1 -VideoPath 
 - ZIP 大小：待填写
 - ZIP SHA-256：待填写
 - SmartScreen/Defender 情况：待填写
+- 构建机 Windows/Python/uv/ffmpeg 版本：待填写
 
 获取 SHA-256：
 

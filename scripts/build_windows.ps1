@@ -54,6 +54,7 @@ foreach ($model in @("base", "small", "medium")) {
     Copy-Item -Path (Join-Path $ModelRoot "$model\*") -Destination $destination -Recurse -Force
 }
 Copy-Item -LiteralPath (Join-Path $projectRoot "packaging\使用说明.txt") -Destination (Join-Path $packageDir "使用说明.txt")
+Copy-Item -LiteralPath (Join-Path $projectRoot "scripts\collect_windows_info.bat") -Destination (Join-Path $packageDir "collect_windows_info.bat")
 
 & (Join-Path $packageDir "v2txt.exe") --version
 if ($LASTEXITCODE -ne 0) { throw "打包后的 v2txt.exe 无法启动" }

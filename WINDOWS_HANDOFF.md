@@ -2,7 +2,13 @@
 
 更新日期：2026-09-11（Asia/Shanghai）
 
-这份文档用于从当前 macOS 开发机切换到 Windows 11 x64 ThinkPad 后继续构建、验证和调优。仓库只包含代码、测试、文档和构建脚本；公司视频、转写正文、模型权重及本地二进制产物均被 `.gitignore` 排除。
+这份文档用于在 Windows 11 x64 构建环境继续生成产品，再把便携包交付到 ThinkPad 验收和运行。ThinkPad 是产品目标机，不是开发设备。仓库只包含代码、测试、文档和构建脚本；公司视频、转写正文、模型权重及本地二进制产物均被 `.gitignore` 排除。
+
+环境边界：
+
+- 开发设备：当前不是 ThinkPad，可以继续编写和提交跨平台代码。
+- Windows 构建机：任意 Windows 11 x64 电脑或 CI，用于运行 uv、测试和 PyInstaller。
+- 产品目标机：低配 ThinkPad X1 Carbon，只接收完整便携 ZIP，负责最终功能和性能验收。
 
 ## 1. 项目目标
 
@@ -32,12 +38,12 @@
 - PyInstaller macOS ARM64/Windows x64 原生构建脚本。
 - 从国内 ModelScope 下载并校验三档离线模型的脚本。
 - macOS ARM64 三模型便携包及真实媒体验证。
-- 47 项自动测试通过，1 项真实媒体测试默认跳过。
+- 48 项自动测试通过，1 项真实媒体测试默认跳过。
 
 尚未完成：
 
-- Windows x64 `.exe` 必须在目标 ThinkPad 原生构建。
-- Windows 上还未完成真实视频端到端、GUI 人工、性能和三档模型验收。
+- Windows x64 `.exe` 必须在一台 Windows x64 构建机生成，但不要求在 ThinkPad 上构建。
+- Windows 构建机的打包验证，以及目标 ThinkPad 的真实视频、GUI、性能和三档模型验收尚未完成。
 - 当前内部产物未做商业代码签名，Windows Defender/SmartScreen 可能提示未知发布者。
 
 接力起点提交：
@@ -51,7 +57,7 @@
 
 切换机器后先确认 `main` 至少包含 `77d50bf` 以及更新本接力文档的提交。
 
-## 3. Windows 准备
+## 3. Windows x64 构建机准备
 
 推荐至少预留 10 GB 磁盘空间。三档模型约 2.16 GB，构建目录和 ZIP 还需要数 GB。
 
@@ -76,21 +82,23 @@ git log --oneline -5
 
 如果公司网络无法使用 `gh`，也可以从 GitHub 私有仓库网页下载源码 ZIP，但继续提交时仍推荐配置 Git。
 
-## 4. 收集 ThinkPad 配置
+这些开发工具只安装在构建机，不要求安装到目标 ThinkPad。
 
-双击：
+## 4. 收集目标 ThinkPad 配置
+
+构建完成后，`collect_windows_info.bat` 会放在便携包中。把完整 ZIP 复制到目标 ThinkPad、解压，然后双击：
 
 ```text
-scripts\collect_windows_info.bat
+collect_windows_info.bat
 ```
 
 它会在同目录生成：
 
 ```text
-scripts\v2txt-machine-info.txt
+v2txt-machine-info.txt
 ```
 
-文件只包含 CPU、核心/线程、内存、Windows 版本、磁盘、显卡、电源计划和工具路径；不采集序列号、产品密钥、用户文件或网络配置。该结果已被 Git 忽略，可用于后续性能调优。
+文件只包含 CPU、核心/线程、内存、Windows 版本、磁盘、显卡和电源计划；不采集序列号、产品密钥、用户文件或网络配置，也不检查开发工具。目标机不需要存在源码仓库。
 
 ## 5. 准备测试视频
 
@@ -100,9 +108,9 @@ scripts\v2txt-machine-info.txt
 testvideo\test.mp4
 ```
 
-当前 macOS 验收素材属性是 H.264/AAC、280.269 秒、约 9.5 MB。Windows 可以使用同一文件，也可以使用不含敏感信息的短中文视频。
+当前 macOS 验收素材属性是 H.264/AAC、280.269 秒、约 9.5 MB。Windows 构建机烟雾测试和 ThinkPad 交付验收可以使用同一文件，也可以使用不含敏感信息的短中文视频。
 
-## 6. 安装、测试与构建 Windows 便携包
+## 6. 在 Windows x64 构建机安装、测试和打包
 
 在仓库根目录执行：
 
@@ -116,7 +124,7 @@ uv run v2txt --help
 预期自动测试至少为：
 
 ```text
-47 passed, 1 skipped
+48 passed, 1 skipped
 ```
 
 一键下载三档模型、打包并使用成品转写测试视频：
@@ -143,16 +151,18 @@ artifacts\v2txt-windows-x64.zip
 artifacts\windows-smoke-output\
 ```
 
-非开发者必须完整解压 ZIP，不能只复制 `v2txt.exe`，因为 `_internal/`、`models/`、ffmpeg 和 ffprobe 都是运行所需资源。
+构建机完成后，把 `artifacts\v2txt-windows-x64.zip` 复制到目标 ThinkPad。不能只复制 `v2txt.exe`，因为 `_internal/`、`models/`、ffmpeg 和 ffprobe 都是运行所需资源。
 
-## 7. Windows 验收清单
+## 7. 目标 ThinkPad 交付验收
+
+ThinkPad 不需要源码仓库，也不需要安装 Git、GitHub CLI、uv、Python 或系统 ffmpeg。把 ZIP 解压到例如 `D:\v2txt\`，所有测试都从该目录执行。
 
 ### 7.1 GUI
 
 双击：
 
 ```text
-artifacts\windows-x64\v2txt\v2txt.exe
+D:\v2txt\v2txt.exe
 ```
 
 确认：
@@ -166,7 +176,7 @@ artifacts\windows-x64\v2txt\v2txt.exe
 ### 7.2 CLI
 
 ```powershell
-.\artifacts\windows-x64\v2txt\v2txt.exe .\testvideo\test.mp4 --model small --output .\.local-validation\win-small --force
+D:\v2txt\v2txt.exe D:\testvideo\test.mp4 --model small --output D:\v2txt-results\small --force
 ```
 
 确认终端显示 Rich 进度条，并生成：
@@ -182,20 +192,20 @@ timeline.md
 断网或临时禁用网络后分别运行，输出目录不要复用：
 
 ```powershell
-.\artifacts\windows-x64\v2txt\v2txt.exe .\testvideo\test.mp4 --model base   --output .\.local-validation\win-base   --force
-.\artifacts\windows-x64\v2txt\v2txt.exe .\testvideo\test.mp4 --model small  --output .\.local-validation\win-small  --force
-.\artifacts\windows-x64\v2txt\v2txt.exe .\testvideo\test.mp4 --model medium --output .\.local-validation\win-medium --force
+D:\v2txt\v2txt.exe D:\testvideo\test.mp4 --model base   --output D:\v2txt-results\base   --force
+D:\v2txt\v2txt.exe D:\testvideo\test.mp4 --model small  --output D:\v2txt-results\small  --force
+D:\v2txt\v2txt.exe D:\testvideo\test.mp4 --model medium --output D:\v2txt-results\medium --force
 ```
 
 `large-v3` 没有打入主包，因为单模型约 3.09 GB，而且在低压 CPU 上非常慢。程序仍保留该选项，可联网下载或放入 `models\large-v3\`。
 
-### 7.4 额外仓库验收
+### 7.4 构建机仓库验收（不要在目标 ThinkPad 执行）
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\verify_windows.ps1 -VideoPath .\testvideo\test.mp4
 ```
 
-只有构建脚本、GUI、CLI、三档离线模型和真实视频都成功后，才能把 Windows 状态改为“实机通过”。
+这条命令依赖源码、uv 和系统 ffmpeg，只属于 Windows 构建机。只有构建机脚本通过，并且便携包在目标 ThinkPad 上完成 GUI、CLI、三档离线模型和真实视频测试后，才能把 Windows 状态改为“交付目标机实测通过”。
 
 ## 8. 参数基线与 Windows 调优
 

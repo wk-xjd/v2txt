@@ -2,7 +2,7 @@
 
 把长时间交接视频或音频在本地转换为带时间戳的 JSON、SRT 和 Markdown。工具不做摘要、不删减、不纠错，也不会上传媒体内容。
 
-切换到 Windows ThinkPad 继续开发或验收时，从 [WINDOWS_HANDOFF.md](WINDOWS_HANDOFF.md) 开始。
+需要在 Windows x64 构建机生成产物、再交付到 ThinkPad 验收时，从 [WINDOWS_HANDOFF.md](WINDOWS_HANDOFF.md) 开始。ThinkPad 是产品目标机，不是开发设备。
 
 ## 非开发者直接使用
 
@@ -112,7 +112,7 @@ uv run v2txt meeting.mp4 -o output
 
 ## 构建便携包
 
-macOS ARM64 在 macOS 主机执行 `scripts/build_macos.sh`；Windows x64 必须在 Windows 主机执行下列命令：
+macOS ARM64 在 macOS 主机执行 `scripts/build_macos.sh`；Windows x64 必须在 Windows x64 构建机执行下列命令：
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts/build_windows.ps1 -VideoPath testvideo/test.mp4
@@ -134,19 +134,17 @@ meeting_transcript/
 
 长视频每 15 分钟形成一个音频块。中断后重新执行完全相同的命令，会跳过已完成的块。修改模型、语言或 prompt 时请使用新的输出目录；若确定要覆盖旧任务，可加 `--force`。`--force` 不会删除输入视频或输出目录中的未知文件。
 
-## Windows 实机验收
+## Windows 构建与 ThinkPad 交付验收
 
-先双击 `scripts/collect_windows_info.bat`，会在脚本旁生成
-`v2txt-machine-info.txt`。该文件包含性能调优所需配置，不收集序列号、
-产品密钥、用户文件或网络配置。
+Windows `.exe` 在任意 Windows 11 x64 构建机生成，不要求使用 ThinkPad 构建。构建后把完整 ZIP 复制到目标 ThinkPad；目标机只需解压运行，不需要 Git、uv、Python 或系统 ffmpeg。
 
-在目标 Windows 11 x64 机器运行：
+构建机运行仓库验收：
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts/verify_windows.ps1 -VideoPath C:\path\to\test.mp4
 ```
 
-脚本检查 CPU 架构、uv、ffmpeg、锁文件安装和全部自动测试，再用 `base` 模型执行一次真实转写。只有该脚本成功结束，才能视为目标 Windows 机器验收通过。
+目标 ThinkPad 解压后双击 `v2txt.exe` 做最终 GUI 和性能验收。便携包还包含 `collect_windows_info.bat`，双击后会在包内生成 `v2txt-machine-info.txt`；该文件不收集序列号、产品密钥、用户文件或网络配置。
 
 ## 常见问题
 
