@@ -134,6 +134,10 @@ meeting_transcript/
 
 ## Windows 实机验收
 
+先双击 `scripts/collect_windows_info.bat`，会在脚本旁生成
+`v2txt-machine-info.txt`。该文件包含性能调优所需配置，不收集序列号、
+产品密钥、用户文件或网络配置。
+
 在目标 Windows 11 x64 机器运行：
 
 ```powershell
