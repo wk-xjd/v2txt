@@ -13,7 +13,7 @@
 
 ## 自动验证
 
-- 自动测试：48 passed，1 skipped；跳过项是必须显式启用的真实模型测试。
+- 自动测试：61 passed，1 skipped；跳过项是必须显式启用的真实模型测试。
 - 显式启用真实模型测试后：1 passed，耗时 197.84 秒。
 - Python 源码编译检查通过。
 - `uv build` 成功生成 `handover_transcriber-0.1.0-py3-none-any.whl` 和源码包。
@@ -98,6 +98,8 @@ powershell -ExecutionPolicy Bypass -File scripts/verify_windows.ps1 -VideoPath C
 - 修正多进程冻结入口后，再用成品离线转写 20 秒样本：7 个 segment、三种输出齐全，无资源管理子进程告警。
 - 使用同一个五秒样本分别从成品内置目录加载 `base`、`small`、`medium`，三次均成功生成全部输出。
 - 无参数启动保持运行并显示 Tk 界面，人工中断后正常退出。
-- ZIP SHA-256：`0208d4a88d8e9d09f3a41d9322b783a7c41dd1ea58273070c32811b7152ff9de`。
+- 2026-09-13 基于代码提交 `00fa10d` 重建最新 macOS ARM64 包，包含简体中文转换和多文件批量转写。
+- 成品使用两个不同音频文件执行批量 CLI 验收，复用内置 `base` 模型并成功完成 `2/2`；每个输出目录均包含 JSON、SRT、Markdown。
+- 最新 ZIP SHA-256：`cc1ab3b8becf1ea4d7edf951b257eb462c20b99cef43e0dc791d245c86980fa7`。
 
 Windows 产物必须由 Windows x64 上的 `scripts/build_windows.ps1` 原生构建；macOS 构建不能替代 Windows 动态库装载和实际 CPU 推理验收。

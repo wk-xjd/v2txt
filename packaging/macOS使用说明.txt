@@ -1,0 +1,27 @@
+v2txt macOS 视频转文字
+======================
+
+适用系统：Apple Silicon（ARM64）Mac。
+
+界面使用：打开 v2txt，可一次选择一个或多个媒体文件，然后点击“开始转写”。
+
+命令行使用：
+  1. 打开“终端”。
+  2. 输入 v2txt 的完整路径，再添加视频路径和参数。常用命令：
+
+       ./v2txt 视频.mp4                         转写一个视频（默认 small）
+       ./v2txt 视频.mp4 --model medium          使用 medium 模型
+       ./v2txt 一.mp4 二.mp4 三.mp4             一次转写多个文件
+       ./v2txt 一.mp4 二.mp4 -o /路径/结果目录   多个文件统一放到指定目录
+
+程序已附带 base、small、medium 三档模型，不需要联网下载；默认使用 small。
+large-v3 仍然支持，选择它时需要联网下载，或自行放入 models/large-v3/。
+
+默认在视频旁创建“视频名_transcript”目录，其中包含：
+  transcript.json  完整结构化文本
+  transcript.srt   字幕文件
+  timeline.md      按时间线整理的 Markdown
+
+程序不会摘要、删减或上传视频。长任务中断后，用相同设置再次运行即可续传。
+内部构建未做 Apple Developer 公证；首次运行若被系统阻止，请在“系统设置 →
+隐私与安全性”中确认允许打开。

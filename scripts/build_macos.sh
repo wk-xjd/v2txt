@@ -43,7 +43,7 @@ for model in base small medium; do
   mkdir -p "$PACKAGE_DIR/models/$model"
   cp -R "$MODEL_ROOT/$model/." "$PACKAGE_DIR/models/$model/"
 done
-cp "$PROJECT_ROOT/packaging/使用说明.txt" "$PACKAGE_DIR/使用说明.txt"
+cp "$PROJECT_ROOT/packaging/macOS使用说明.txt" "$PACKAGE_DIR/使用说明.txt"
 
 "$PACKAGE_DIR/v2txt" --version
 rm -f "$ARTIFACT_ROOT/v2txt-macos-arm64.zip"
