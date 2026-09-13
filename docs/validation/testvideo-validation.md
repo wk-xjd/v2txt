@@ -100,6 +100,7 @@ powershell -ExecutionPolicy Bypass -File scripts/verify_windows.ps1 -VideoPath C
 - 无参数启动保持运行并显示 Tk 界面，人工中断后正常退出。
 - 2026-09-13 基于代码提交 `00fa10d` 重建最新 macOS ARM64 包，包含简体中文转换和多文件批量转写。
 - 成品使用两个不同音频文件执行批量 CLI 验收，复用内置 `base` 模型并成功完成 `2/2`；每个输出目录均包含 JSON、SRT、Markdown。
-- 最新 ZIP SHA-256：`cc1ab3b8becf1ea4d7edf951b257eb462c20b99cef43e0dc791d245c86980fa7`。
+- 2026-09-13 再次重建并确认便携包包含 `云端AI整理提示词.md`，内容与仓库提示词完全一致。
+- 最新 ZIP SHA-256：`a75d690fc11661c28d2f6b19b1011c713fc6a96981f493a2df60ee29686ded57`。
 
 Windows 产物必须由 Windows x64 上的 `scripts/build_windows.ps1` 原生构建；macOS 构建不能替代 Windows 动态库装载和实际 CPU 推理验收。

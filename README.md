@@ -2,6 +2,8 @@
 
 把长时间交接视频或音频在本地转换为带时间戳的 JSON、SRT 和 Markdown。工具不做摘要、不删减、不纠错，也不会上传媒体内容。
 
+需要让云端大模型完成“CLI 转写 → 文本纠错 → 时间线目录 → 详细交接文档 → 视频定位”时，可直接复制 [通用总控提示词](prompts/video-handover-workflow-prompt.md)。
+
 需要在 Windows x64 构建机生成产物、再交付到 ThinkPad 验收时，从 [WINDOWS_HANDOFF.md](WINDOWS_HANDOFF.md) 开始。ThinkPad 是产品目标机，不是开发设备。
 
 ## 非开发者直接使用
